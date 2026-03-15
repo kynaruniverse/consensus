@@ -4,25 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Consensus — The World's Opinion, Live</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/recharts@2/umd/Recharts.min.js"></script>
-  <script src="https://unpkg.com/html2canvas@1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    .live-dot { animation: pulse-dot 1.5s infinite; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #030712; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes fillBar { from{width:0} to{width:var(--w)} }
+    .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#34d399; animation:pulse 1.5s infinite; }
+    .bar { animation: fillBar 0.8s cubic-bezier(0.4,0,0.2,1) forwards; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; }
   </style>
 </head>
-<body style="background:#030712;color:white;margin:0;font-family:sans-serif">
+<body>
   <div id="root"></div>
-
   <script>
-    // ── No Babel needed — plain JS only ──────────────────────
-
-    const { useState, useEffect, createElement: h } = React;
-    const { PieChart, Pie, Cell, Tooltip, Legend } = Recharts;
+    const { useState, useEffect } = React;
     const { createClient } = supabase;
 
     const db = createClient(
@@ -38,312 +37,303 @@
       catch { return '🌍'; }
     };
 
-    // ── Simple hash router (no CDN needed) ───────────────────
-    // page = 'home' | 'post' | 'question'
-    // questionId = uuid string when page === 'question'
+    const e = React.createElement;
+
+    // ── Router ────────────────────────────────────────────────
     const useRouter = () => {
       const parse = () => {
-        const h = window.location.hash.replace('#','');
-        if (h.startsWith('/q/')) return { page:'question', id: h.slice(3) };
-        if (h === '/post') return { page:'post', id: null };
+        const hash = window.location.hash.replace('#','');
+        if (hash.startsWith('/q/')) return { page:'question', id: hash.slice(3) };
+        if (hash === '/post') return { page:'post', id: null };
         return { page:'home', id: null };
       };
       const [route, setRoute] = useState(parse);
       useEffect(() => {
-        const handler = () => setRoute(parse());
-        window.addEventListener('hashchange', handler);
-        return () => window.removeEventListener('hashchange', handler);
+        const fn = () => setRoute(parse());
+        window.addEventListener('hashchange', fn);
+        return () => window.removeEventListener('hashchange', fn);
       }, []);
-      const go = (path) => { window.location.hash = path; };
-      return { route, go };
+      return route;
     };
 
     // ── NavBar ────────────────────────────────────────────────
-    const NavBar = ({ go }) =>
-      h('nav', { style:{position:'fixed',top:0,left:0,right:0,zIndex:50,background:'rgba(3,7,18,0.95)',borderBottom:'1px solid #1f2937',backdropFilter:'blur(12px)'} },
-        h('div', { style:{maxWidth:640,margin:'0 auto',padding:'0 16px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between'} },
-          h('a', { href:'#/', style:{color:'white',textDecoration:'none',fontSize:20,fontWeight:900} },
-            h('span', { style:{color:'#818cf8'} }, 'con'), 'sensus'
+    const NavBar = () =>
+      e('nav', { style:{position:'fixed',top:0,left:0,right:0,zIndex:50,background:'rgba(3,7,18,0.96)',borderBottom:'1px solid #1f2937'} },
+        e('div', { style:{maxWidth:640,margin:'0 auto',padding:'0 16px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between'} },
+          e('a', { href:'#/', style:{fontSize:20,fontWeight:900} },
+            e('span',{style:{color:'#818cf8'}},'con'),'sensus'
           ),
-          h('a', { href:'#/post', style:{background:'#4f46e5',color:'white',textDecoration:'none',padding:'8px 20px',borderRadius:999,fontSize:14,fontWeight:700} },
+          e('a', { href:'#/post', style:{background:'#4f46e5',color:'white',padding:'8px 18px',borderRadius:999,fontSize:14,fontWeight:700} },
             '+ Ask the world'
           )
         )
       );
 
     // ── Home ──────────────────────────────────────────────────
-    const Home = ({ go }) => {
+    const Home = () => {
       const [questions, setQuestions] = useState([]);
       const [loading, setLoading] = useState(true);
 
       useEffect(() => {
         db.from('questions').select('*').order('created_at',{ascending:false})
-          .then(({ data }) => { setQuestions(data||[]); setLoading(false); });
+          .then(({data}) => { setQuestions(data||[]); setLoading(false); });
       }, []);
 
-      return h('div', { style:{paddingTop:80,paddingBottom:64,padding:'80px 16px 64px',maxWidth:640,margin:'0 auto'} },
+      return e('div', { style:{maxWidth:640,margin:'0 auto',padding:'72px 16px 64px'} },
         // Hero
-        h('div', { style:{textAlign:'center',padding:'40px 0 16px'} },
-          h('h1', { style:{fontSize:44,fontWeight:900,lineHeight:1.15,marginBottom:12} },
-            h('span', { style:{background:'linear-gradient(135deg,#818cf8,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'} },
-              'What does the world think?'
-            )
+        e('div', { style:{textAlign:'center',padding:'32px 0 24px'} },
+          e('h1', { style:{fontSize:40,fontWeight:900,lineHeight:1.2,marginBottom:12,background:'linear-gradient(135deg,#818cf8,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'} },
+            'What does the world think?'
           ),
-          h('p', { style:{color:'#9ca3af',fontSize:18,margin:0} }, 'Vote. See the planet respond. Share the result.')
+          e('p', { style:{color:'#9ca3af',fontSize:17} }, 'Vote. See the planet respond. Share the result.')
         ),
-        // Live dot
-        h('div', { style:{display:'flex',alignItems:'center',justifyContent:'center',gap:8,margin:'24px 0',color:'#6b7280',fontSize:14} },
-          h('span', { className:'live-dot', style:{width:8,height:8,borderRadius:'50%',background:'#34d399',display:'inline-block'} }),
-          'Results update in real time'
+        e('div', { style:{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:24,color:'#6b7280',fontSize:13} },
+          e('span',{className:'live-dot'}), 'Results update in real time'
         ),
-        // Questions
         loading
-          ? h('div', { style:{textAlign:'center',color:'#4b5563',padding:'80px 0',fontSize:18} }, 'Loading...')
+          ? e('div',{style:{textAlign:'center',color:'#4b5563',padding:80,fontSize:17}},'Loading...')
           : questions.length === 0
-            ? h('div', { style:{textAlign:'center',padding:'80px 0'} },
-                h('div', { style:{fontSize:48,marginBottom:16} }, '🌍'),
-                h('p', { style:{color:'#9ca3af',fontSize:18,marginBottom:8} }, 'No questions yet.'),
-                h('p', { style:{color:'#4b5563'} }, 'Be the first to ask the world something.')
-              )
-            : h('div', { style:{display:'flex',flexDirection:'column',gap:12} },
-                ...questions.map(q => h(QuestionCard, { key:q.id, question:q }))
-              )
+          ? e('div',{style:{textAlign:'center',padding:80}},
+              e('div',{style:{fontSize:48,marginBottom:12}},'🌍'),
+              e('p',{style:{color:'#9ca3af',fontSize:17}},'No questions yet — post the first one!')
+            )
+          : e('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+              ...questions.map(q => e(QuestionCard,{key:q.id,question:q}))
+            )
       );
     };
 
     // ── QuestionCard ──────────────────────────────────────────
-    const QuestionCard = ({ question }) => {
-      const voted = localStorage.getItem(`voted_${question.id}`) !== null;
-      return h('a', {
-        href: `#/q/${question.id}`,
-        style:{display:'block',background:'#111827',border:'1px solid #1f2937',borderRadius:16,padding:20,textDecoration:'none',color:'white'}
-      },
-        h('p', { style:{fontSize:17,fontWeight:600,marginBottom:12,lineHeight:1.4} }, question.question_text),
-        h('div', { style:{display:'flex',justifyContent:'space-between',alignItems:'flex-end',gap:12} },
-          h('div', { style:{display:'flex',gap:6,flexWrap:'wrap'} },
+    const QuestionCard = ({question}) => {
+      const voted = localStorage.getItem('voted_'+question.id) !== null;
+      return e('a', { href:'#/q/'+question.id,
+        style:{display:'block',background:'#0f172a',border:'1px solid #1e293b',borderRadius:16,padding:'18px 20px',transition:'border-color 0.2s'}},
+        e('p',{style:{fontSize:16,fontWeight:600,marginBottom:10,lineHeight:1.4}}, question.question_text),
+        e('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}},
+          e('div',{style:{display:'flex',gap:6,flexWrap:'wrap'}},
             ...question.options.slice(0,3).map((opt,i) =>
-              h('span', { key:i, style:{fontSize:12,padding:'3px 10px',borderRadius:999,border:`1px solid ${COLORS[i%COLORS.length]}44`,color:COLORS[i%COLORS.length],background:COLORS[i%COLORS.length]+'11'} }, opt)
+              e('span',{key:i,style:{fontSize:11,padding:'2px 9px',borderRadius:999,border:'1px solid '+COLORS[i%COLORS.length]+'55',color:COLORS[i%COLORS.length],background:COLORS[i%COLORS.length]+'15'}}, opt)
             ),
-            question.options.length > 3 && h('span', { style:{fontSize:12,color:'#4b5563',padding:'3px 0'} }, `+${question.options.length-3} more`)
+            question.options.length > 3 && e('span',{style:{fontSize:11,color:'#4b5563'}},'+'+( question.options.length-3)+' more')
           ),
-          h('span', { style:{fontSize:14,flexShrink:0,color: voted?'#34d399':'#6366f1'} }, voted ? '✓ Voted' : 'Vote →')
+          e('span',{style:{fontSize:13,flexShrink:0,color:voted?'#34d399':'#6366f1',fontWeight:600}}, voted?'✓ Voted':'Vote →')
         )
       );
     };
 
     // ── PostPage ──────────────────────────────────────────────
-    const PostPage = ({ go }) => {
+    const PostPage = () => {
       const [question, setQuestion] = useState('');
       const [options, setOptions] = useState(['','']);
       const [posting, setPosting] = useState(false);
 
-      const addOption = () => { if (options.length < 4) setOptions([...options,'']); };
-      const removeOption = (i) => { if (options.length > 2) setOptions(options.filter((_,idx)=>idx!==i)); };
-
       const post = async () => {
         const valid = options.filter(o=>o.trim()!=='');
-        if (!question.trim() || valid.length < 2) { alert('Add a question and at least 2 options.'); return; }
+        if (!question.trim() || valid.length < 2) { alert('Need a question + at least 2 options.'); return; }
         setPosting(true);
-        const { data, error } = await db.from('questions').insert({ question_text:question.trim(), options:valid }).select().single();
+        const {data,error} = await db.from('questions').insert({question_text:question.trim(),options:valid}).select().single();
         setPosting(false);
         if (error) { alert('Error: '+error.message); return; }
-        window.location.hash = `/q/${data.id}`;
+        window.location.hash = '/q/'+data.id;
       };
 
-      const inputStyle = { width:'100%',background:'#1f2937',border:'1px solid #374151',color:'white',borderRadius:12,padding:12,fontSize:15,outline:'none',boxSizing:'border-box' };
+      const inp = {width:'100%',background:'#1e293b',border:'1px solid #334155',color:'white',borderRadius:10,padding:'11px 13px',fontSize:15,outline:'none'};
 
-      return h('div', { style:{paddingTop:80,paddingBottom:64,padding:'80px 16px 64px',maxWidth:640,margin:'0 auto'} },
-        h('h2', { style:{fontSize:28,fontWeight:900,marginBottom:8} }, 'Ask the world'),
-        h('p', { style:{color:'#6b7280',marginBottom:24} }, 'Post a question and watch the votes roll in live.'),
-        h('div', { style:{background:'#111827',border:'1px solid #1f2937',borderRadius:16,padding:24} },
-          h('textarea', { placeholder:'e.g. Is a hotdog a sandwich?', style:{...inputStyle,height:112,resize:'none',marginBottom:16,fontSize:17}, value:question, onChange:e=>setQuestion(e.target.value) }),
-          h('div', { style:{display:'flex',flexDirection:'column',gap:8,marginBottom:16} },
-            ...options.map((opt,i) =>
-              h('div', { key:i, style:{display:'flex',alignItems:'center',gap:8} },
-                h('div', { style:{width:28,height:28,borderRadius:'50%',background:COLORS[i%COLORS.length]+'22',color:COLORS[i%COLORS.length],display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,flexShrink:0} }, i+1),
-                h('input', { type:'text', placeholder:`Option ${i+1}${i<2?' (required)':''}`, style:{...inputStyle,flex:1}, value:opt, onChange:e=>{ const n=[...options];n[i]=e.target.value;setOptions(n); } }),
-                options.length > 2 && h('button', { onClick:()=>removeOption(i), style:{background:'none',border:'none',color:'#4b5563',cursor:'pointer',fontSize:22,padding:'0 4px'} }, '×')
+      return e('div',{style:{maxWidth:640,margin:'0 auto',padding:'72px 16px 64px'}},
+        e('h2',{style:{fontSize:26,fontWeight:900,marginBottom:6}},'Ask the world'),
+        e('p',{style:{color:'#6b7280',marginBottom:24,fontSize:15}},'Post a question and watch the votes roll in live.'),
+        e('div',{style:{background:'#0f172a',border:'1px solid #1e293b',borderRadius:16,padding:24}},
+          e('textarea',{placeholder:'e.g. Is a hotdog a sandwich?',value:question,onChange:ev=>setQuestion(ev.target.value),
+            style:{...inp,height:100,resize:'none',marginBottom:14,fontSize:16}}),
+          e('div',{style:{display:'flex',flexDirection:'column',gap:8,marginBottom:14}},
+            ...options.map((opt,i)=>
+              e('div',{key:i,style:{display:'flex',alignItems:'center',gap:8}},
+                e('div',{style:{width:26,height:26,borderRadius:'50%',background:COLORS[i%COLORS.length]+'25',color:COLORS[i%COLORS.length],display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,flexShrink:0}},i+1),
+                e('input',{type:'text',placeholder:'Option '+(i+1)+(i<2?' (required)':''),value:opt,
+                  onChange:ev=>{const n=[...options];n[i]=ev.target.value;setOptions(n);},style:{...inp,flex:1}}),
+                options.length>2 && e('button',{onClick:()=>setOptions(options.filter((_,j)=>j!==i)),
+                  style:{background:'none',border:'none',color:'#475569',cursor:'pointer',fontSize:20,padding:'0 4px',lineHeight:1}},'×')
               )
             )
           ),
-          options.length < 4 && h('button', { onClick:addOption, style:{background:'none',border:'none',color:'#818cf8',cursor:'pointer',fontSize:14,padding:0,marginBottom:16,display:'block'} }, '+ Add another option'),
-          h('button', { onClick:post, disabled:posting, style:{width:'100%',padding:'16px',borderRadius:12,border:'none',background:posting?'#374151':'#4f46e5',color:'white',fontWeight:700,fontSize:17,cursor:posting?'not-allowed':'pointer'} },
-            posting ? 'Posting...' : '🌍 Post to the World'
-          )
+          options.length<4 && e('button',{onClick:()=>setOptions([...options,'']),
+            style:{background:'none',border:'none',color:'#818cf8',cursor:'pointer',fontSize:14,padding:'0 0 14px',display:'block'}},
+            '+ Add another option'),
+          e('button',{onClick:post,disabled:posting,
+            style:{width:'100%',padding:15,borderRadius:12,border:'none',background:posting?'#1e293b':'#4f46e5',color:'white',fontWeight:700,fontSize:16,cursor:posting?'not-allowed':'pointer'}},
+            posting?'Posting...':'🌍 Post to the World')
         )
       );
     };
 
+    // ── ResultBars — custom chart, no library needed ──────────
+    const ResultBars = ({options, votes}) => {
+      const total = votes.length;
+      return e('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+        ...options.map((opt,i)=>{
+          const count = votes.filter(v=>v.option_index===i).length;
+          const pct = total>0 ? Math.round((count/total)*100) : 0;
+          return e('div',{key:i},
+            e('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:14}},
+              e('span',{style:{fontWeight:600,color:COLORS[i%COLORS.length]}},'Option '+(i+1)+': '+opt),
+              e('span',{style:{fontWeight:800,color:COLORS[i%COLORS.length]}},(total>0?pct+'%':'—'))
+            ),
+            e('div',{style:{background:'#1e293b',borderRadius:999,height:10,overflow:'hidden'}},
+              e('div',{style:{height:'100%',borderRadius:999,background:COLORS[i%COLORS.length],width:pct+'%',transition:'width 0.9s cubic-bezier(0.4,0,0.2,1)'}})
+            ),
+            e('div',{style:{fontSize:12,color:'#475569',marginTop:4}},count+' vote'+(count!==1?'s':''))
+          );
+        })
+      );
+    };
+
     // ── QuestionPage ──────────────────────────────────────────
-    const QuestionPage = ({ id }) => {
+    const QuestionPage = ({id}) => {
       const [question, setQuestion] = useState(null);
       const [votes, setVotes] = useState([]);
       const [myVote, setMyVote] = useState(null);
       const [country, setCountry] = useState('XX');
       const [voting, setVoting] = useState(false);
-      const [shareMsg, setShareMsg] = useState('');
+      const [msg, setMsg] = useState('');
 
-      useEffect(() => {
-        const s = localStorage.getItem(`voted_${id}`);
-        if (s !== null) setMyVote(parseInt(s,10));
-      }, [id]);
+      useEffect(()=>{
+        const s=localStorage.getItem('voted_'+id);
+        if(s!==null) setMyVote(parseInt(s,10));
+      },[id]);
 
-      useEffect(() => {
+      useEffect(()=>{
         fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>setCountry(d.country_code||'XX')).catch(()=>{});
-      }, []);
+      },[]);
 
-      useEffect(() => {
-        if (!id) return;
+      useEffect(()=>{
+        if(!id) return;
         db.from('questions').select('*').eq('id',id).single().then(({data})=>setQuestion(data));
-        const loadVotes = async () => { const {data} = await db.from('votes').select('*').eq('question_id',id); setVotes(data||[]); };
-        loadVotes();
-        const ch = db.channel(`votes:${id}`)
-          .on('postgres_changes',{event:'INSERT',schema:'public',table:'votes',filter:`question_id=eq.${id}`},loadVotes)
+        const load = async()=>{ const {data}=await db.from('votes').select('*').eq('question_id',id); setVotes(data||[]); };
+        load();
+        const ch = db.channel('votes:'+id)
+          .on('postgres_changes',{event:'INSERT',schema:'public',table:'votes',filter:'question_id=eq.'+id},load)
           .subscribe();
-        return () => db.removeChannel(ch);
-      }, [id]);
+        return ()=>db.removeChannel(ch);
+      },[id]);
 
-      const castVote = async (index) => {
-        if (myVote !== null || voting) return;
+      const castVote = async(index)=>{
+        if(myVote!==null||voting) return;
         setVoting(true);
-        const { error } = await db.from('votes').insert({ question_id:id, option_index:index, country_code:country });
+        const {error}=await db.from('votes').insert({question_id:id,option_index:index,country_code:country});
         setVoting(false);
-        if (error) { alert('Vote failed: '+error.message); return; }
+        if(error){alert('Vote failed: '+error.message);return;}
         setMyVote(index);
-        localStorage.setItem(`voted_${id}`, String(index));
+        localStorage.setItem('voted_'+id,String(index));
       };
 
-      const shareCard = async () => {
-        const el = document.getElementById('results-card');
-        if (!el) return;
-        setShareMsg('Generating...');
-        try {
-          const canvas = await html2canvas(el,{backgroundColor:'#0f172a',scale:2});
-          const a = document.createElement('a');
-          a.download = `consensus-${id.slice(0,8)}.png`;
-          a.href = canvas.toDataURL('image/png');
-          a.click();
-          setShareMsg('');
-        } catch(e) { setShareMsg(''); alert('Image failed: '+e.message); }
-      };
-
-      const copyLink = () => {
+      const copyLink = ()=>{
         navigator.clipboard.writeText(window.location.href)
-          .then(()=>{ setShareMsg('✓ Link copied!'); setTimeout(()=>setShareMsg(''),2000); })
-          .catch(()=>setShareMsg('Copy the URL manually.'));
+          .then(()=>{setMsg('✓ Link copied!');setTimeout(()=>setMsg(''),2000);})
+          .catch(()=>setMsg('Copy the URL manually.'));
       };
 
-      if (!question) return h('div',{style:{paddingTop:120,textAlign:'center',color:'#4b5563',fontSize:18}},'Loading...');
+      if(!question) return e('div',{style:{paddingTop:120,textAlign:'center',color:'#4b5563',fontSize:17}},'Loading...');
 
       const total = votes.length;
-      const chartData = question.options.map((opt,i)=>({ name:opt, value:votes.filter(v=>v.option_index===i).length }));
-      const countryStats = votes.reduce((acc,v)=>{ const c=v.country_code||'XX'; acc[c]=(acc[c]||0)+1; return acc; },{});
-      const topCountries = Object.entries(countryStats).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      const countryStats = votes.reduce((acc,v)=>{const c=v.country_code||'XX';acc[c]=(acc[c]||0)+1;return acc;},{});
+      const topCountries = Object.entries(countryStats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      const hasVoted = myVote!==null;
 
-      return h('div', { style:{paddingTop:64,paddingBottom:64,padding:'64px 16px 64px',maxWidth:640,margin:'0 auto'} },
-        h('a', { href:'#/', style:{color:'#818cf8',textDecoration:'none',fontSize:14,display:'inline-block',margin:'16px 0 24px'} }, '← All Questions'),
-        h('h1', { style:{fontSize:28,fontWeight:900,lineHeight:1.3,marginBottom:24} }, question.question_text),
+      return e('div',{style:{maxWidth:640,margin:'0 auto',padding:'64px 16px 64px'}},
+        e('a',{href:'#/',style:{color:'#818cf8',fontSize:14,display:'inline-block',margin:'16px 0 20px'}},'← All Questions'),
+        e('h1',{style:{fontSize:26,fontWeight:900,lineHeight:1.35,marginBottom:28}},question.question_text),
 
         // Vote buttons
-        h('div', { style:{display:'flex',flexDirection:'column',gap:12,marginBottom:40} },
-          ...question.options.map((opt,i) => {
-            const count = votes.filter(v=>v.option_index===i).length;
-            const pct = total > 0 ? Math.round((count/total)*100) : 0;
-            const isMyVote = myVote === i;
-            const hasVoted = myVote !== null;
-            return h('button', {
-              key:i, onClick:()=>castVote(i), disabled:hasVoted||voting,
-              style:{position:'relative',overflow:'hidden',textAlign:'left',padding:'16px',borderRadius:16,border:`1px solid ${isMyVote?'#6366f1':'#1f2937'}`,background:isMyVote?'#1e1b4b':'#111827',color:'white',fontWeight:600,cursor:hasVoted?'not-allowed':'pointer',width:'100%',fontSize:15}
-            },
-              hasVoted && h('div',{style:{position:'absolute',left:0,top:0,height:'100%',borderRadius:16,opacity:0.2,background:COLORS[i%COLORS.length],width:`${pct}%`,transition:'width 0.8s ease'}}),
-              h('div',{style:{position:'relative',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-                h('span',{style:{display:'flex',alignItems:'center',gap:8}},
-                  isMyVote && h('span',{style:{color:'#818cf8'}},'✓'), opt
+        e('div',{style:{display:'flex',flexDirection:'column',gap:10,marginBottom:32}},
+          ...question.options.map((opt,i)=>{
+            const count=votes.filter(v=>v.option_index===i).length;
+            const pct=total>0?Math.round((count/total)*100):0;
+            const isMe=myVote===i;
+            return e('button',{key:i,onClick:()=>castVote(i),disabled:hasVoted||voting,
+              style:{position:'relative',overflow:'hidden',textAlign:'left',padding:'14px 16px',borderRadius:14,
+                border:'1px solid '+(isMe?'#6366f1':'#1e293b'),background:isMe?'#1e1b4b':'#0f172a',
+                color:'white',fontWeight:600,fontSize:15,cursor:hasVoted?'default':'pointer',width:'100%'}},
+              hasVoted && e('div',{style:{position:'absolute',left:0,top:0,height:'100%',background:COLORS[i%COLORS.length],opacity:0.18,width:pct+'%',transition:'width 0.8s ease'}}),
+              e('div',{style:{position:'relative',display:'flex',justifyContent:'space-between',alignItems:'center'}},
+                e('span',{style:{display:'flex',alignItems:'center',gap:8}},
+                  isMe && e('span',{style:{color:'#818cf8'}},'✓ '), opt
                 ),
-                hasVoted && h('span',{style:{fontWeight:900,color:COLORS[i%COLORS.length]}})`${pct}%`
+                hasVoted && e('span',{style:{fontWeight:800,fontSize:15,color:COLORS[i%COLORS.length]}},pct+'%')
               )
             );
           })
         ),
 
         // Results card
-        h('div', { id:'results-card', style:{background:'#0f172a',border:'1px solid #1e293b',borderRadius:24,padding:24} },
-          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}},
-            h('div',null,
-              h('h2',{style:{fontSize:20,fontWeight:900,margin:0}},'Live Results'),
-              h('p',{style:{color:'#6b7280',fontSize:13,margin:'4px 0 0',lineHeight:1.4}},question.question_text)
+        e('div',{id:'results-card',style:{background:'#0f172a',border:'1px solid #1e293b',borderRadius:20,padding:24,marginBottom:12}},
+          e('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}},
+            e('div',null,
+              e('h2',{style:{fontSize:18,fontWeight:900}},'Live Results'),
+              e('p',{style:{color:'#6b7280',fontSize:13,marginTop:4,lineHeight:1.4}},question.question_text)
             ),
-            h('div',{style:{textAlign:'right'}},
-              h('div',{style:{display:'flex',alignItems:'center',gap:6,justifyContent:'flex-end'}},
-                h('span',{className:'live-dot',style:{width:8,height:8,borderRadius:'50%',background:'#34d399',display:'inline-block'}}),
-                h('span',{style:{fontSize:12,color:'#6b7280'}},'LIVE')
+            e('div',{style:{textAlign:'right',flexShrink:0,marginLeft:12}},
+              e('div',{style:{display:'flex',alignItems:'center',gap:6,justifyContent:'flex-end',marginBottom:2}},
+                e('span',{className:'live-dot'}),
+                e('span',{style:{fontSize:12,color:'#6b7280'}},'LIVE')
               ),
-              h('div',{style:{fontSize:28,fontWeight:900,margin:'2px 0 0'}},total),
-              h('div',{style:{fontSize:12,color:'#4b5563'}},'votes')
+              e('div',{style:{fontSize:26,fontWeight:900}},total),
+              e('div',{style:{fontSize:11,color:'#475569'}},'votes')
             )
           ),
-          total === 0
-            ? h('div',{style:{textAlign:'center',color:'#4b5563',padding:'48px 0'}},
-                h('div',{style:{fontSize:40,marginBottom:12}},'🗳️'),
-                h('p',null,'No votes yet — be the first!')
+
+          total===0
+            ? e('div',{style:{textAlign:'center',color:'#4b5563',padding:'40px 0'}},
+                e('div',{style:{fontSize:36,marginBottom:8}},'🗳️'),
+                e('p',null,'No votes yet — be the first!')
               )
-            : h('div',null,
-                h('div',{style:{display:'flex',justifyContent:'center',marginBottom:16}},
-                  h(PieChart,{width:280,height:250},
-                    h(Pie,{data:chartData,dataKey:'value',nameKey:'name',cx:'50%',cy:'50%',outerRadius:95,paddingAngle:3,label:({percent})=>percent>0.04?`${Math.round(percent*100)}%`:'',labelLine:false},
-                      ...chartData.map((_,i)=>h(Cell,{key:i,fill:COLORS[i%COLORS.length]}))
-                    ),
-                    h(Tooltip,{formatter:(v,n)=>[`${v} votes`,n]}),
-                    h(Legend,null)
-                  )
-                ),
-                topCountries.length > 0 && h('div',{style:{borderTop:'1px solid #1e293b',paddingTop:20}},
-                  h('h3',{style:{fontSize:11,fontWeight:700,color:'#6b7280',textTransform:'uppercase',letterSpacing:2,marginBottom:16}},'By Country'),
-                  h('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+            : e('div',null,
+                e(ResultBars,{options:question.options,votes}),
+                topCountries.length>0 && e('div',{style:{marginTop:24,paddingTop:20,borderTop:'1px solid #1e293b'}},
+                  e('p',{style:{fontSize:11,fontWeight:700,color:'#475569',textTransform:'uppercase',letterSpacing:2,marginBottom:14}},'By Country'),
+                  e('div',{style:{display:'flex',flexDirection:'column',gap:10}},
                     ...topCountries.map(([code,count])=>{
                       const pct=Math.round((count/total)*100);
-                      return h('div',{key:code,style:{display:'flex',alignItems:'center',gap:12}},
-                        h('span',{style:{fontSize:20,width:28,textAlign:'center'}},getFlag(code)),
-                        h('div',{style:{flex:1,background:'#1e293b',borderRadius:999,overflow:'hidden',height:8}},
-                          h('div',{style:{height:'100%',background:'#6366f1',width:`${pct}%`,transition:'width 0.8s ease',borderRadius:999}})
+                      return e('div',{key:code,style:{display:'flex',alignItems:'center',gap:10}},
+                        e('span',{style:{fontSize:18,width:26,textAlign:'center',flexShrink:0}},getFlag(code)),
+                        e('div',{style:{flex:1,background:'#1e293b',borderRadius:999,overflow:'hidden',height:7}},
+                          e('div',{style:{height:'100%',background:'#6366f1',width:pct+'%',transition:'width 0.8s ease',borderRadius:999}})
                         ),
-                        h('span',{style:{fontSize:13,color:'#9ca3af',width:64,textAlign:'right',flexShrink:0}},`${code} · ${pct}%`)
+                        e('span',{style:{fontSize:12,color:'#9ca3af',width:60,textAlign:'right',flexShrink:0}},code+' · '+pct+'%')
                       );
                     })
                   )
                 )
               ),
-          h('div',{style:{marginTop:24,paddingTop:16,borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-            h('span',{style:{fontSize:12,fontWeight:900,color:'#818cf8'}},'consensus'),
-            h('span',{style:{fontSize:12,color:'#374151'}},new Date().toLocaleDateString())
+
+          e('div',{style:{marginTop:20,paddingTop:16,borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-between',alignItems:'center'}},
+            e('span',{style:{fontSize:12,fontWeight:900,color:'#818cf8'}},'consensus'),
+            e('span',{style:{fontSize:12,color:'#334155'}},new Date().toLocaleDateString())
           )
         ),
 
-        // Share buttons
-        h('div',{style:{marginTop:16,display:'flex',flexDirection:'column',gap:12}},
-          h('button',{onClick:shareCard,style:{width:'100%',padding:'16px',borderRadius:16,border:'none',background:'#059669',color:'white',fontWeight:700,fontSize:17,cursor:'pointer'}},
-            '📸 Save & Share Result Card'
-          ),
-          h('button',{onClick:copyLink,style:{width:'100%',padding:'12px',borderRadius:16,border:'1px solid #1f2937',background:'transparent',color:'#9ca3af',fontWeight:600,fontSize:14,cursor:'pointer'}},
+        // Share
+        e('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+          e('button',{onClick:copyLink,
+            style:{width:'100%',padding:14,borderRadius:14,border:'1px solid #1e293b',background:'transparent',color:'#9ca3af',fontWeight:600,fontSize:15,cursor:'pointer'}},
             '🔗 Copy Link to Share'
           ),
-          shareMsg && h('p',{style:{textAlign:'center',fontSize:14,color:'#34d399',margin:0}},shareMsg)
+          msg && e('p',{style:{textAlign:'center',fontSize:13,color:'#34d399',margin:0}},msg)
         )
       );
     };
 
     // ── App ───────────────────────────────────────────────────
     const App = () => {
-      const { route } = useRouter();
-      return h('div', { style:{minHeight:'100vh',background:'#030712',color:'white'} },
-        h(NavBar, null),
-        route.page === 'home'     && h(Home, null),
-        route.page === 'post'     && h(PostPage, null),
-        route.page === 'question' && h(QuestionPage, { id: route.id })
+      const route = useRouter();
+      return e('div',{style:{minHeight:'100vh'}},
+        e(NavBar,null),
+        route.page==='home'     && e(Home,null),
+        route.page==='post'     && e(PostPage,null),
+        route.page==='question' && e(QuestionPage,{id:route.id})
       );
     };
 
-    ReactDOM.createRoot(document.getElementById('root')).render(h(App, null));
+    ReactDOM.createRoot(document.getElementById('root')).render(e(App,null));
   </script>
 </body>
 </html>
