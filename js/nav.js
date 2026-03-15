@@ -10,8 +10,8 @@ export const NavBar = ({ user }) =>
 
       // Logo
       e('a', { href:'#/', style:{fontSize:21,fontWeight:900,letterSpacing:'-0.5px'} },
-        span({style:{color:'#818cf8'}},'con'),
-        span({style:{color:'#f1f5f9'}},'sensus')
+        span({style:{color:'#818cf8'}},'Spit'),
+        span({style:{color:'#f1f5f9'}},'fact')
       ),
 
       // Right side

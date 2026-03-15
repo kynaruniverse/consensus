@@ -78,7 +78,7 @@ export const AuthPage = () => {
 
     div({ style:{textAlign:'center',marginBottom:32} },
       div({ style:{fontSize:40,marginBottom:12} }, '🌍'),
-      e('h1', { style:{fontSize:26,fontWeight:900,marginBottom:6} }, 'Join Consensus'),
+      e('h1', { style:{fontSize:26,fontWeight:900,marginBottom:6} }, 'Join Spitfact'),
       p({ style:{color:'#64748b',fontSize:15} },
         'Vote, predict, and see how the world thinks.'
       )

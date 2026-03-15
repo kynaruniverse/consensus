@@ -8,8 +8,8 @@ import { AuthPage, ProfilePage } from './auth.js';
 
 const { useState, useEffect } = React;
 
-const SITE_URL  = 'https://kynaruniverse.github.io/consensus';
-const SITE_NAME = 'Consensus';
+const SITE_URL  = 'spitfact.netlify.app';
+const SITE_NAME = 'Spitfact';
 const DEFAULT_DESC = 'Vote on anything. See live results from around the planet.';
 const DEFAULT_IMG  = SITE_URL + '/og-default.png';
 
