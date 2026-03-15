@@ -122,11 +122,31 @@ export const QuestionPage = ({ id, user }) => {
   const [showReveal,   setShowReveal]   = useState(false);
 
   useEffect(()=>{
-    const s  = localStorage.getItem('voted_'+id);
+    // Load prediction from localStorage
     const pr = localStorage.getItem('pred_'+id);
-    if (s  !== null) setMyVote(parseInt(s,10));
     if (pr !== null) { setMyPrediction(parseInt(pr,10)); setPredLocked(true); }
-  },[id]);
+
+    // Check vote: localStorage first (fast), then DB if logged in (authoritative)
+    const local = localStorage.getItem('voted_'+id);
+    if (local !== null) {
+      setMyVote(parseInt(local,10));
+    } else if (user?.id) {
+      // User is logged in — check DB in case they voted on another device
+      // or after clearing browser data
+      db.from('votes')
+        .select('option_index')
+        .eq('question_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({data})=>{
+          if (data) {
+            setMyVote(data.option_index);
+            localStorage.setItem('voted_'+id, String(data.option_index));
+            setPredLocked(true);
+          }
+        });
+    }
+  },[id, user?.id]);
 
   useEffect(()=>{
     fetch('https://ipapi.co/json/').then(r=>r.json())
@@ -151,6 +171,24 @@ export const QuestionPage = ({ id, user }) => {
   const castVote = async index=>{
     if (myVote!==null||voting) return;
     setVoting(true);
+
+    // For logged-in users: double-check DB before inserting
+    if (user?.id) {
+      const {data:existing} = await db.from('votes')
+        .select('option_index')
+        .eq('question_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (existing) {
+        // Already voted — sync local state and bail
+        setMyVote(existing.option_index);
+        localStorage.setItem('voted_'+id, String(existing.option_index));
+        setPredLocked(true);
+        setVoting(false);
+        return;
+      }
+    }
+
     const payload = { question_id:id, option_index:index, country_code:country };
     if (user) {
       payload.user_id   = user.id;

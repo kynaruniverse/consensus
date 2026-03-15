@@ -29,94 +29,70 @@ const useRouter = () => {
 
 // ── App ───────────────────────────────────────────────────────
 const App = () => {
-  const route              = useRouter();
-  const [user, setUser]    = useState(null);
-  // FIX 1: Start as true — never block rendering.
-  // Auth state loads in the background and updates nav/UI when ready.
+  const route               = useRouter();
+  const [user, setUser]     = useState(null);
   const [authReady, setAuthReady] = useState(false);
-  // FIX 2: homeKey increments every time we navigate to home,
-  // forcing Home to remount and re-fetch the feed.
-  const [homeKey, setHomeKey] = useState(0);
+  const [homeKey, setHomeKey]     = useState(0);
 
+  // Bump homeKey whenever we navigate back to home so feed re-fetches
   useEffect(()=>{
-    // Track previous page so we know when we return to home
-    let prevPage = route.page;
-
-    const unlisten = ()=>{
+    let prev = route.page;
+    const fn = ()=>{
       const h = window.location.hash.replace('#','');
-      const newPage = h.startsWith('/q/') ? 'question'
-        : h === '/post'    ? 'post'
-        : h === '/auth'    ? 'auth'
-        : h === '/profile' ? 'profile'
-        : 'home';
-      // If navigating TO home from anywhere, bump the key
-      if (newPage === 'home' && prevPage !== 'home') {
-        setHomeKey(k => k + 1);
-      }
-      prevPage = newPage;
+      const next = h.startsWith('/q/') ? 'question'
+        : h==='/post' ? 'post' : h==='/auth' ? 'auth'
+        : h==='/profile' ? 'profile' : 'home';
+      if (next==='home' && prev!=='home') setHomeKey(k=>k+1);
+      prev = next;
     };
-    window.addEventListener('hashchange', unlisten);
-    return ()=>window.removeEventListener('hashchange', unlisten);
+    window.addEventListener('hashchange', fn);
+    return ()=>window.removeEventListener('hashchange', fn);
   },[]);
 
+  // ── Auth: use onAuthStateChange exclusively ───────────────
+  // Supabase fires INITIAL_SESSION on every page load with the
+  // persisted session from localStorage — no need for getSession.
+  // This is the only source of truth for auth state.
   useEffect(()=>{
-    // FIX 3: Always resolve — timeout fallback prevents permanent blank screen
-    let resolved = false;
-    const resolve = async(session) => {
-      if (resolved) return;
-      resolved = true;
-      if (session?.user) {
-        try {
-          const { data: profile } = await db.from('profiles')
-            .select('*').eq('id', session.user.id).single();
-          setUser({ ...session.user,
-            username:  profile?.username,
-            age_range: profile?.age_range,
-            gender:    profile?.gender });
-        } catch(_) {
-          setUser(session.user);
+    // Safety net: if Supabase never fires, show app after 3s
+    const timeout = setTimeout(()=>setAuthReady(true), 3000);
+
+    const { data:{ subscription } } = db.auth.onAuthStateChange(
+      async (event, session) => {
+        clearTimeout(timeout);
+
+        if (session?.user) {
+          try {
+            const { data: profile } = await db.from('profiles')
+              .select('*').eq('id', session.user.id).single();
+            setUser({
+              ...session.user,
+              username:  profile?.username  || null,
+              age_range: profile?.age_range || null,
+              gender:    profile?.gender    || null,
+            });
+          } catch(_) {
+            // Profile fetch failed — set user without profile data
+            setUser(session.user);
+          }
+        } else {
+          setUser(null);
         }
+
+        setAuthReady(true);
       }
-      setAuthReady(true);
-    };
-
-    // Hard timeout — if Supabase takes >4s, show app anyway
-    const timeout = setTimeout(()=>{ resolved=true; setAuthReady(true); }, 4000);
-
-    db.auth.getSession()
-      .then(({data:{session}})=>{ clearTimeout(timeout); resolve(session); })
-      .catch(()=>{ clearTimeout(timeout); resolved=true; setAuthReady(true); });
-
-    // Listen for sign in / sign out events
-    const { data:{ subscription } } = db.auth.onAuthStateChange(async(event, session)=>{
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-      } else if (session?.user) {
-        try {
-          const { data: profile } = await db.from('profiles')
-            .select('*').eq('id', session.user.id).single();
-          setUser({ ...session.user,
-            username:  profile?.username,
-            age_range: profile?.age_range,
-            gender:    profile?.gender });
-        } catch(_) {
-          setUser(session.user);
-        }
-      }
-      setAuthReady(true);
-    });
+    );
 
     return ()=>{ clearTimeout(timeout); subscription.unsubscribe(); };
   },[]);
 
-  const handleAuth          = (u)=>{ setUser(u); window.location.hash='/'; };
-  const handleSignOut       = ()=>{ setUser(null); window.location.hash='/'; };
+  const handleSignOut       = ()=>{ db.auth.signOut(); };
   const handleProfileUpdate = (u)=>setUser(u);
 
-  // Show minimal shell while auth resolves (max 4s, usually instant)
-  if (!authReady) return div({ style:{minHeight:'100vh',background:'#020817',
-    display:'flex',alignItems:'center',justifyContent:'center'} },
-    div({ style:{display:'flex',flexDirection:'column',alignItems:'center',gap:12} },
+  if (!authReady) return div({
+    style:{minHeight:'100vh',background:'#020817',
+      display:'flex',alignItems:'center',justifyContent:'center'}},
+    div({style:{display:'flex',flexDirection:'column',alignItems:'center',gap:12}},
       e('span',{className:'live-dot'}),
       e('p',{style:{color:'#334155',fontSize:14}},'Loading...')
     )
@@ -124,15 +100,14 @@ const App = () => {
 
   return div({ style:{minHeight:'100vh',background:'#020817'} },
     e(NavBar, { user }),
-    // FIX 2: key={homeKey} forces Home to fully remount on every visit
     route.page==='home'     && e(Home,        { key:homeKey }),
     route.page==='post'     && e(PostPage,     { user }),
     route.page==='question' && e(QuestionPage, { id:route.id, user }),
-    route.page==='auth'     && e(AuthPage,     { onAuth:handleAuth }),
+    route.page==='auth'     && e(AuthPage,     null),
     route.page==='profile'  && (
       user
         ? e(ProfilePage, { user, onSignOut:handleSignOut, onProfileUpdate:handleProfileUpdate })
-        : e(AuthPage,    { onAuth:handleAuth })
+        : e(AuthPage,    null)
     )
   );
 };
