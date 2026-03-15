@@ -1,5 +1,4 @@
 // js/auth.js
-import { navigate } from './app.js';
 import { e, div, span, p, db, AGE_RANGES, GENDERS } from './db.js';
 const { useState, useEffect } = React;
 
@@ -29,7 +28,7 @@ export const AuthPage = () => {
     // Success — onAuthStateChange in app.js fires SIGNED_IN,
     // sets user, and we navigate home. Don't touch loading state
     // here — the component will unmount as we navigate.
-    navigate('/');
+    window.location.hash = '/';
   };
 
   const signUp = async () => {
@@ -64,7 +63,7 @@ export const AuthPage = () => {
 
     if (data.session) {
       // Logged in immediately — navigate home
-      navigate('/');
+      window.location.hash = '/';
     } else {
       // Email confirmation required
       setLoading(false);
@@ -140,7 +139,7 @@ export const AuthPage = () => {
     ),
 
     div({style:{textAlign:'center',marginTop:20}},
-      e('a',{href:'/',style:{fontSize:13,color:'#334155'}},'← Continue without account')
+      e('a',{href:'#/',style:{fontSize:13,color:'#334155'}},'← Continue without account')
     )
   );
 };
@@ -238,7 +237,7 @@ export const ProfilePage = ({ user, onSignOut, onProfileUpdate }) => {
     e('button',{className:'btn-danger',onClick:onSignOut},'→ Sign out'),
 
     div({style:{textAlign:'center',marginTop:16}},
-      e('a',{href:'/',style:{fontSize:13,color:'#334155'}},'← Back to questions')
+      e('a',{href:'#/',style:{fontSize:13,color:'#334155'}},'← Back to questions')
     )
   );
 };

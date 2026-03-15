@@ -42,29 +42,21 @@ export const setPageMeta = ({ title, description, url, image } = {}) => {
   canon.href = u;
 };
 
-// ── navigate helper ───────────────────────────────────────────
-// Replaces window.location.hash = '...' everywhere.
-// Uses history.pushState for clean URLs.
-export const navigate = (path) => {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-};
-
-// ── Router ────────────────────────────────────────────────────
+// ── Router — hash based (works with all existing href links) ──
 const useRouter = () => {
   const parse = () => {
-    const path = window.location.pathname;
-    if (path.startsWith('/q/')) return { page:'question', id:path.slice(3) };
-    if (path === '/post')       return { page:'post' };
-    if (path === '/auth')       return { page:'auth' };
-    if (path === '/profile')    return { page:'profile' };
+    const h = window.location.hash.replace('#','');
+    if (h.startsWith('/q/')) return { page:'question', id:h.slice(3) };
+    if (h === '/post')       return { page:'post' };
+    if (h === '/auth')       return { page:'auth' };
+    if (h === '/profile')    return { page:'profile' };
     return { page:'home' };
   };
   const [route, setRoute] = useState(parse);
   useEffect(()=>{
     const fn = ()=>setRoute(parse());
-    window.addEventListener('popstate', fn);
-    return ()=>window.removeEventListener('popstate', fn);
+    window.addEventListener('hashchange', fn);
+    return ()=>window.removeEventListener('hashchange', fn);
   },[]);
   return route;
 };
@@ -89,22 +81,22 @@ const App = () => {
     }
   },[route.page]);
 
-  // Bump homeKey when navigating back to home
+  // Bump homeKey when navigating back to home so feed re-fetches
   useEffect(()=>{
     let prev = route.page;
     const fn = ()=>{
-      const path = window.location.pathname;
-      const next = path.startsWith('/q/') ? 'question'
-        : path==='/post' ? 'post' : path==='/auth' ? 'auth'
-        : path==='/profile' ? 'profile' : 'home';
+      const h = window.location.hash.replace('#','');
+      const next = h.startsWith('/q/') ? 'question'
+        : h==='/post' ? 'post' : h==='/auth' ? 'auth'
+        : h==='/profile' ? 'profile' : 'home';
       if (next==='home' && prev!=='home') setHomeKey(k=>k+1);
       prev = next;
     };
-    window.addEventListener('popstate', fn);
-    return ()=>window.removeEventListener('popstate', fn);
+    window.addEventListener('hashchange', fn);
+    return ()=>window.removeEventListener('hashchange', fn);
   },[]);
 
-  // Auth
+  // Auth — onAuthStateChange only
   useEffect(()=>{
     const timeout = setTimeout(()=>setAuthReady(true), 3000);
     const { data:{ subscription } } = db.auth.onAuthStateChange(

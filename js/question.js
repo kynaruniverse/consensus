@@ -230,8 +230,8 @@ export const QuestionPage = ({ id, user }) => {
       const opts    = data.options.join(' vs ');
       const rawDesc = data.question_text + ' — ' + opts + '. Vote now and see live results from around the world.';
       const desc    = rawDesc.length > 160 ? rawDesc.slice(0,157)+'...' : rawDesc;
-      const pageUrl = 'https://kynaruniverse.github.io/consensus/#/q/' + data.id;
-      setPageMeta({ title: data.question_text + ' · Consensus', description: desc, url: pageUrl });
+      const pageUrl = 'https://kynaruniverse.github.io/spitfact/#/q/' + data.id;
+      setPageMeta({ title: data.question_text + ' · Spitfact', description: desc, url: pageUrl });
 
       // JSON-LD structured data so Google understands this is a poll
       const old = document.getElementById('jsonld-q');
@@ -297,8 +297,8 @@ export const QuestionPage = ({ id, user }) => {
     blob(80,80,180,'rgba(99,102,241,0.2)');blob(560,340,150,'rgba(167,139,250,0.15)');
     ctx.fillStyle='#0d1424';roundRect(ctx,24,24,W-48,H-48,20);ctx.fill();
     ctx.strokeStyle='#1a2540';ctx.lineWidth=1;roundRect(ctx,24,24,W-48,H-48,20);ctx.stroke();
-    ctx.font='700 15px sans-serif';ctx.fillStyle='#818cf8';ctx.fillText('con',44,60);
-    const cw=ctx.measureText('con').width;ctx.fillStyle='#94a3b8';ctx.fillText('sensus',44+cw,60);
+    ctx.font='700 15px sans-serif';ctx.fillStyle='#818cf8';ctx.fillText('Spit',44,60);
+    const cw=ctx.measureText('Spit').width;ctx.fillStyle='#94a3b8';ctx.fillText('fact',44+cw,60);
     ctx.beginPath();ctx.arc(W-44,53,5,0,Math.PI*2);ctx.fillStyle='#10b981';ctx.fill();
     ctx.font='600 12px sans-serif';ctx.fillStyle='#6ee7b7';ctx.textAlign='right';
     ctx.fillText('LIVE · '+total+' vote'+(total!==1?'s':''),W-56,58);ctx.textAlign='left';
@@ -318,8 +318,8 @@ export const QuestionPage = ({ id, user }) => {
     });
     const fy=H-48;ctx.strokeStyle='#1a2540';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(44,fy);ctx.lineTo(W-44,fy);ctx.stroke();
     ctx.font='500 11px sans-serif';ctx.fillStyle='#334155';ctx.fillText(new Date().toLocaleDateString(),44,fy+17);
-    ctx.textAlign='right';ctx.fillText('kynaruniverse.github.io/consensus',W-44,fy+17);ctx.textAlign='left';
-    const a=document.createElement('a');a.download='consensus-'+id.slice(0,8)+'.png';a.href=canvas.toDataURL('image/png');a.click();
+    ctx.textAlign='right';ctx.fillText('spitfact.netlify.app',W-44,fy+17);ctx.textAlign='left';
+    const a=document.createElement('a');a.download='spitfact-'+id.slice(0,8)+'.png';a.href=canvas.toDataURL('image/png');a.click();
     setMsg('✓ Image saved!');setTimeout(()=>setMsg(''),3000);
   };
 
@@ -348,7 +348,7 @@ export const QuestionPage = ({ id, user }) => {
   return div({style:{maxWidth:640,margin:'0 auto',padding:'58px 16px 80px'},className:'fade-up'},
 
     // Back
-    e('a',{href:'/',style:{display:'inline-flex',alignItems:'center',gap:6,color:'#64748b',
+    e('a',{href:'#/',style:{display:'inline-flex',alignItems:'center',gap:6,color:'#64748b',
       fontSize:13,fontWeight:500,padding:'16px 0 20px'}},'← All questions'),
 
     // Category tag
@@ -522,7 +522,7 @@ export const QuestionPage = ({ id, user }) => {
       div({style:{marginTop:22,paddingTop:16,borderTop:'1px solid #1a2540',
         display:'flex',justifyContent:'space-between',alignItems:'center'}},
         span({style:{fontSize:13,fontWeight:900,letterSpacing:'-0.3px'}},
-          span({style:{color:'#818cf8'}},'con'),span({style:{color:'#94a3b8'}},'sensus')),
+          span({style:{color:'#818cf8'}},'Spit'),span({style:{color:'#94a3b8'}},'fact')),
         span({style:{fontSize:11,color:'#334155'}},new Date().toLocaleDateString())
       )
     ),
@@ -535,7 +535,7 @@ export const QuestionPage = ({ id, user }) => {
 
     !user&&div({style:{textAlign:'center',marginTop:12,fontSize:13,color:'#475569'}},
       'Sign in to unlock ',
-      e('a',{href:'/auth',style:{color:'#818cf8',fontWeight:600}},'gender & age breakdowns'),
+      e('a',{href:'#/auth',style:{color:'#818cf8',fontWeight:600}},'gender & age breakdowns'),
       ' on results.'
     ),
 
