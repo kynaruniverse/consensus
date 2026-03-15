@@ -8,30 +8,43 @@ export const NavBar = ({ user }) =>
     div({ style:{maxWidth:640,margin:'0 auto',padding:'0 20px',height:58,
       display:'flex',alignItems:'center',justifyContent:'space-between'} },
 
-      // Logo — hash href so router picks it up
-      e('a', { href:'#/', style:{fontSize:21,fontWeight:900,letterSpacing:'-0.5px'} },
-        span({style:{color:'#818cf8'}},'Spit'),
-        span({style:{color:'#f1f5f9'}},'fact')
+      // Logo
+      e('a', { href:'#/', style:{fontSize:21,fontWeight:900,letterSpacing:'-0.5px',textDecoration:'none'} },
+        e('span',{style:{color:'#818cf8'}},'Spit'),
+        e('span',{style:{color:'#f1f5f9'}},'fact')
       ),
 
       // Right side
-      div({ style:{display:'flex',alignItems:'center',gap:10} },
+      div({ style:{display:'flex',alignItems:'center',gap:8} },
+
+        // Feed link
+        e('a', { href:'#/feed',
+          style:{fontSize:13,fontWeight:600,color:'#64748b',padding:'6px 10px',
+            borderRadius:999,textDecoration:'none',transition:'color 0.15s'} },
+          'Feed'
+        ),
+
+        // Ask button
         e('a', { href:'#/post',
           style:{background:'linear-gradient(135deg,#6366f1,#4f46e5)',color:'white',
             padding:'8px 16px',borderRadius:999,fontSize:13,fontWeight:700,
+            textDecoration:'none',
             boxShadow:'0 2px 12px rgba(99,102,241,0.4)'} },
           '+ Ask'
         ),
+
+        // Avatar or sign in
         user
           ? e('a', { href:'#/profile',
-              style:{width:34,height:34,borderRadius:'50%',
+              style:{width:32,height:32,borderRadius:'50%',flexShrink:0,
                 background:'linear-gradient(135deg,#6366f1,#a78bfa)',
                 display:'flex',alignItems:'center',justifyContent:'center',
-                fontSize:14,fontWeight:900,color:'white',flexShrink:0} },
+                fontSize:13,fontWeight:900,color:'white',textDecoration:'none'} },
               (user.username||user.email||'?')[0].toUpperCase()
             )
           : e('a', { href:'#/auth',
-              style:{fontSize:13,fontWeight:600,color:'#64748b',padding:'8px 12px'} },
+              style:{fontSize:13,fontWeight:600,color:'#64748b',
+                padding:'6px 10px',textDecoration:'none'} },
               'Sign in'
             )
       )

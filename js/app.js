@@ -1,7 +1,7 @@
 // js/app.js
 import { e, div, db }           from './db.js';
 import { NavBar }                from './nav.js';
-import { Home }                  from './home.js';
+import { Home, FeedPage }        from './home.js';
 import { PostPage }              from './post.js';
 import { QuestionPage }          from './question.js';
 import { AuthPage, ProfilePage } from './auth.js';
@@ -48,6 +48,7 @@ const useRouter = () => {
     const h = window.location.hash.replace('#','');
     if (h.startsWith('/q/')) return { page:'question', id:h.slice(3) };
     if (h === '/post')       return { page:'post' };
+    if (h.startsWith('/feed')) return { page:'feed' };
     if (h === '/auth')       return { page:'auth' };
     if (h === '/profile')    return { page:'profile' };
     return { page:'home' };
@@ -73,6 +74,7 @@ const App = () => {
     if (route.page !== 'question') {
       const titles = {
         home:    SITE_NAME + ' — The World\'s Opinion, Live',
+        feed:    'Feed · ' + SITE_NAME,
         post:    'Ask the World · ' + SITE_NAME,
         auth:    'Sign In · ' + SITE_NAME,
         profile: 'Profile · ' + SITE_NAME,
@@ -87,7 +89,7 @@ const App = () => {
     const fn = ()=>{
       const h = window.location.hash.replace('#','');
       const next = h.startsWith('/q/') ? 'question'
-        : h==='/post' ? 'post' : h==='/auth' ? 'auth'
+        : h.startsWith('/feed') ? 'feed' : h==='/post' ? 'post' : h==='/auth' ? 'auth'
         : h==='/profile' ? 'profile' : 'home';
       if (next==='home' && prev!=='home') setHomeKey(k=>k+1);
       prev = next;
@@ -135,6 +137,7 @@ const App = () => {
   return div({ style:{minHeight:'100vh',background:'#020817'} },
     e(NavBar, { user }),
     route.page==='home'     && e(Home,        { key:homeKey }),
+    route.page==='feed'     && e(FeedPage,    { key:'feed' }),
     route.page==='post'     && e(PostPage,     { user }),
     route.page==='question' && e(QuestionPage, { id:route.id, user }),
     route.page==='auth'     && e(AuthPage,     null),
