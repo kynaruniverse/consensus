@@ -9,7 +9,7 @@ const QuestionCard = ({ question, voteCount, recentCount }) => {
   const hot      = voteCount >= 10;
   const cat      = CATEGORIES.find(c=>c.id===question.category);
 
-  return e('a',{ href:'#/q/'+question.id, className:'card card-tap',
+  return e('a',{ href:'/q/'+question.id, className:'card card-tap',
     style:{display:'block',padding:'18px 20px'} },
 
     // Top row: question + badges

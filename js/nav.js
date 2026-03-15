@@ -9,28 +9,28 @@ export const NavBar = ({ user }) =>
       display:'flex',alignItems:'center',justifyContent:'space-between'} },
 
       // Logo
-      e('a', { href:'#/', style:{fontSize:21,fontWeight:900,letterSpacing:'-0.5px'} },
-        span({style:{color:'#818cf8'}},'Spit'),
-        span({style:{color:'#f1f5f9'}},'fact')
+      e('a', { href:'/', style:{fontSize:21,fontWeight:900,letterSpacing:'-0.5px'} },
+        span({style:{color:'#818cf8'}},'con'),
+        span({style:{color:'#f1f5f9'}},'sensus')
       ),
 
       // Right side
       div({ style:{display:'flex',alignItems:'center',gap:10} },
-        e('a', { href:'#/post',
+        e('a', { href:'/post',
           style:{background:'linear-gradient(135deg,#6366f1,#4f46e5)',color:'white',
             padding:'8px 16px',borderRadius:999,fontSize:13,fontWeight:700,
             boxShadow:'0 2px 12px rgba(99,102,241,0.4)'} },
           '+ Ask'
         ),
         user
-          ? e('a', { href:'#/profile',
+          ? e('a', { href:'/profile',
               style:{width:34,height:34,borderRadius:'50%',
                 background:'linear-gradient(135deg,#6366f1,#a78bfa)',
                 display:'flex',alignItems:'center',justifyContent:'center',
                 fontSize:14,fontWeight:900,color:'white',flexShrink:0} },
               (user.username||user.email||'?')[0].toUpperCase()
             )
-          : e('a', { href:'#/auth',
+          : e('a', { href:'/auth',
               style:{fontSize:13,fontWeight:600,color:'#64748b',padding:'8px 12px'} },
               'Sign in'
             )

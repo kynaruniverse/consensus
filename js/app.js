@@ -8,26 +8,20 @@ import { AuthPage, ProfilePage } from './auth.js';
 
 const { useState, useEffect } = React;
 
-const SITE_URL  = 'spitfact.netlify.app';
+const SITE_URL  = 'https://spitfact.netlify.app';
 const SITE_NAME = 'Spitfact';
 const DEFAULT_DESC = 'Vote on anything. See live results from around the planet.';
 const DEFAULT_IMG  = SITE_URL + '/og-default.png';
 
 // ── setPageMeta ───────────────────────────────────────────────
-// Call this from any page to update the browser tab title,
-// meta description, and all Open Graph / Twitter card tags.
-// Google's crawler executes JS and reads these — so even with
-// hash routing each question page gets unique metadata.
 export const setPageMeta = ({ title, description, url, image } = {}) => {
   const t   = title       || SITE_NAME + ' — The World\'s Opinion, Live';
   const d   = description || DEFAULT_DESC;
   const u   = url         || SITE_URL + '/';
   const img = image       || DEFAULT_IMG;
 
-  // Browser tab title
   document.title = t;
 
-  // Helper: get or create a meta tag
   const setMeta = (sel, attr, val) => {
     let el = document.querySelector(sel);
     if (!el) { el = document.createElement('meta'); document.head.appendChild(el); }
@@ -43,27 +37,34 @@ export const setPageMeta = ({ title, description, url, image } = {}) => {
   setMeta('meta[name="twitter:description"]', 'content', d);
   setMeta('meta[name="twitter:image"]',       'content', img);
 
-  // Canonical URL
   let canon = document.querySelector('link[rel="canonical"]');
   if (!canon) { canon = document.createElement('link'); canon.rel='canonical'; document.head.appendChild(canon); }
   canon.href = u;
 };
 
+// ── navigate helper ───────────────────────────────────────────
+// Replaces window.location.hash = '...' everywhere.
+// Uses history.pushState for clean URLs.
+export const navigate = (path) => {
+  window.history.pushState({}, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+};
+
 // ── Router ────────────────────────────────────────────────────
 const useRouter = () => {
   const parse = () => {
-    const h = window.location.hash.replace('#','');
-    if (h.startsWith('/q/')) return { page:'question', id:h.slice(3) };
-    if (h === '/post')       return { page:'post' };
-    if (h === '/auth')       return { page:'auth' };
-    if (h === '/profile')    return { page:'profile' };
+    const path = window.location.pathname;
+    if (path.startsWith('/q/')) return { page:'question', id:path.slice(3) };
+    if (path === '/post')       return { page:'post' };
+    if (path === '/auth')       return { page:'auth' };
+    if (path === '/profile')    return { page:'profile' };
     return { page:'home' };
   };
   const [route, setRoute] = useState(parse);
   useEffect(()=>{
     const fn = ()=>setRoute(parse());
-    window.addEventListener('hashchange', fn);
-    return ()=>window.removeEventListener('hashchange', fn);
+    window.addEventListener('popstate', fn);
+    return ()=>window.removeEventListener('popstate', fn);
   },[]);
   return route;
 };
@@ -75,7 +76,7 @@ const App = () => {
   const [authReady, setAuthReady] = useState(false);
   const [homeKey, setHomeKey]     = useState(0);
 
-  // Reset meta to defaults when navigating to non-question pages
+  // Reset meta on non-question pages
   useEffect(()=>{
     if (route.page !== 'question') {
       const titles = {
@@ -92,18 +93,18 @@ const App = () => {
   useEffect(()=>{
     let prev = route.page;
     const fn = ()=>{
-      const h = window.location.hash.replace('#','');
-      const next = h.startsWith('/q/') ? 'question'
-        : h==='/post' ? 'post' : h==='/auth' ? 'auth'
-        : h==='/profile' ? 'profile' : 'home';
+      const path = window.location.pathname;
+      const next = path.startsWith('/q/') ? 'question'
+        : path==='/post' ? 'post' : path==='/auth' ? 'auth'
+        : path==='/profile' ? 'profile' : 'home';
       if (next==='home' && prev!=='home') setHomeKey(k=>k+1);
       prev = next;
     };
-    window.addEventListener('hashchange', fn);
-    return ()=>window.removeEventListener('hashchange', fn);
+    window.addEventListener('popstate', fn);
+    return ()=>window.removeEventListener('popstate', fn);
   },[]);
 
-  // Auth — onAuthStateChange only (INITIAL_SESSION fires on load)
+  // Auth
   useEffect(()=>{
     const timeout = setTimeout(()=>setAuthReady(true), 3000);
     const { data:{ subscription } } = db.auth.onAuthStateChange(

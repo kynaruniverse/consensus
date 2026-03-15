@@ -1,4 +1,5 @@
 // js/post.js
+import { navigate } from './app.js';
 import { e, div, p, db, COLORS, CATEGORIES } from './db.js';
 const { useState } = React;
 
@@ -19,7 +20,7 @@ export const PostPage = ({ user }) => {
     const { data, error } = await db.from('questions').insert(payload).select().single();
     setPosting(false);
     if (error) { alert('Error: '+error.message); return; }
-    window.location.hash = '/q/'+data.id;
+    navigate('/q/'+data.id);
   };
 
   const selectedCat = CATEGORIES.find(c=>c.id===category);
@@ -98,7 +99,7 @@ export const PostPage = ({ user }) => {
 
       !user && div({style:{marginTop:14,textAlign:'center',fontSize:13,color:'#475569'}},
         'Posting anonymously. ',
-        e('a',{href:'#/auth',style:{color:'#818cf8',fontWeight:600}},'Sign in'),
+        e('a',{href:'/auth',style:{color:'#818cf8',fontWeight:600}},'Sign in'),
         ' to track your questions.'
       )
     )

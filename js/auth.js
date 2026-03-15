@@ -1,4 +1,5 @@
 // js/auth.js
+import { navigate } from './app.js';
 import { e, div, span, p, db, AGE_RANGES, GENDERS } from './db.js';
 const { useState, useEffect } = React;
 
@@ -28,7 +29,7 @@ export const AuthPage = () => {
     // Success — onAuthStateChange in app.js fires SIGNED_IN,
     // sets user, and we navigate home. Don't touch loading state
     // here — the component will unmount as we navigate.
-    window.location.hash = '/';
+    navigate('/');
   };
 
   const signUp = async () => {
@@ -63,7 +64,7 @@ export const AuthPage = () => {
 
     if (data.session) {
       // Logged in immediately — navigate home
-      window.location.hash = '/';
+      navigate('/');
     } else {
       // Email confirmation required
       setLoading(false);
@@ -78,7 +79,7 @@ export const AuthPage = () => {
 
     div({ style:{textAlign:'center',marginBottom:32} },
       div({ style:{fontSize:40,marginBottom:12} }, '🌍'),
-      e('h1', { style:{fontSize:26,fontWeight:900,marginBottom:6} }, 'Join Spitfact'),
+      e('h1', { style:{fontSize:26,fontWeight:900,marginBottom:6} }, 'Join Consensus'),
       p({ style:{color:'#64748b',fontSize:15} },
         'Vote, predict, and see how the world thinks.'
       )
@@ -139,7 +140,7 @@ export const AuthPage = () => {
     ),
 
     div({style:{textAlign:'center',marginTop:20}},
-      e('a',{href:'#/',style:{fontSize:13,color:'#334155'}},'← Continue without account')
+      e('a',{href:'/',style:{fontSize:13,color:'#334155'}},'← Continue without account')
     )
   );
 };
@@ -237,7 +238,7 @@ export const ProfilePage = ({ user, onSignOut, onProfileUpdate }) => {
     e('button',{className:'btn-danger',onClick:onSignOut},'→ Sign out'),
 
     div({style:{textAlign:'center',marginTop:16}},
-      e('a',{href:'#/',style:{fontSize:13,color:'#334155'}},'← Back to questions')
+      e('a',{href:'/',style:{fontSize:13,color:'#334155'}},'← Back to questions')
     )
   );
 };
