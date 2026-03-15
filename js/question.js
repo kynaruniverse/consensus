@@ -1,5 +1,6 @@
 // js/question.js
 import { e, div, span, p, db, COLORS, CATEGORIES, getFlag } from './db.js';
+import { setPageMeta } from './app.js';
 const { useState, useEffect } = React;
 
 // ── Canvas helpers ────────────────────────────────────────────
@@ -221,7 +222,34 @@ export const QuestionPage = ({ id, user }) => {
 
   useEffect(()=>{
     if(!id) return;
-    db.from('questions').select('*').eq('id',id).single().then(({data})=>setQuestion(data));
+    db.from('questions').select('*').eq('id',id).single().then(({data})=>{
+      if (!data) return;
+      setQuestion(data);
+
+      // Dynamic meta tags — Google crawler executes JS and reads these
+      const opts    = data.options.join(' vs ');
+      const rawDesc = data.question_text + ' — ' + opts + '. Vote now and see live results from around the world.';
+      const desc    = rawDesc.length > 160 ? rawDesc.slice(0,157)+'...' : rawDesc;
+      const pageUrl = 'https://kynaruniverse.github.io/consensus/#/q/' + data.id;
+      setPageMeta({ title: data.question_text + ' · Consensus', description: desc, url: pageUrl });
+
+      // JSON-LD structured data so Google understands this is a poll
+      const old = document.getElementById('jsonld-q');
+      if (old) old.remove();
+      const s   = document.createElement('script');
+      s.id      = 'jsonld-q';
+      s.type    = 'application/ld+json';
+      s.text    = JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'Question',
+        'name': data.question_text, 'text': data.question_text,
+        'dateCreated': data.created_at,
+        'url': pageUrl,
+        'suggestedAnswer': data.options.map((opt,i)=>({
+          '@type':'Answer','text':opt,'position':i+1
+        }))
+      });
+      document.head.appendChild(s);
+    });
     const load=async()=>{const{data}=await db.from('votes').select('*').eq('question_id',id);setVotes(data||[]);};
     load();
     const ch=db.channel('votes:'+id)

@@ -8,6 +8,47 @@ import { AuthPage, ProfilePage } from './auth.js';
 
 const { useState, useEffect } = React;
 
+const SITE_URL  = 'https://kynaruniverse.github.io/consensus';
+const SITE_NAME = 'Consensus';
+const DEFAULT_DESC = 'Vote on anything. See live results from around the planet.';
+const DEFAULT_IMG  = SITE_URL + '/og-default.png';
+
+// ── setPageMeta ───────────────────────────────────────────────
+// Call this from any page to update the browser tab title,
+// meta description, and all Open Graph / Twitter card tags.
+// Google's crawler executes JS and reads these — so even with
+// hash routing each question page gets unique metadata.
+export const setPageMeta = ({ title, description, url, image } = {}) => {
+  const t   = title       || SITE_NAME + ' — The World\'s Opinion, Live';
+  const d   = description || DEFAULT_DESC;
+  const u   = url         || SITE_URL + '/';
+  const img = image       || DEFAULT_IMG;
+
+  // Browser tab title
+  document.title = t;
+
+  // Helper: get or create a meta tag
+  const setMeta = (sel, attr, val) => {
+    let el = document.querySelector(sel);
+    if (!el) { el = document.createElement('meta'); document.head.appendChild(el); }
+    el.setAttribute(attr, val);
+  };
+
+  setMeta('meta[name="description"]',         'content', d);
+  setMeta('meta[property="og:title"]',        'content', t);
+  setMeta('meta[property="og:description"]',  'content', d);
+  setMeta('meta[property="og:url"]',          'content', u);
+  setMeta('meta[property="og:image"]',        'content', img);
+  setMeta('meta[name="twitter:title"]',       'content', t);
+  setMeta('meta[name="twitter:description"]', 'content', d);
+  setMeta('meta[name="twitter:image"]',       'content', img);
+
+  // Canonical URL
+  let canon = document.querySelector('link[rel="canonical"]');
+  if (!canon) { canon = document.createElement('link'); canon.rel='canonical'; document.head.appendChild(canon); }
+  canon.href = u;
+};
+
 // ── Router ────────────────────────────────────────────────────
 const useRouter = () => {
   const parse = () => {
@@ -29,12 +70,25 @@ const useRouter = () => {
 
 // ── App ───────────────────────────────────────────────────────
 const App = () => {
-  const route               = useRouter();
-  const [user, setUser]     = useState(null);
+  const route                     = useRouter();
+  const [user, setUser]           = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [homeKey, setHomeKey]     = useState(0);
 
-  // Bump homeKey whenever we navigate back to home so feed re-fetches
+  // Reset meta to defaults when navigating to non-question pages
+  useEffect(()=>{
+    if (route.page !== 'question') {
+      const titles = {
+        home:    SITE_NAME + ' — The World\'s Opinion, Live',
+        post:    'Ask the World · ' + SITE_NAME,
+        auth:    'Sign In · ' + SITE_NAME,
+        profile: 'Profile · ' + SITE_NAME,
+      };
+      setPageMeta({ title: titles[route.page] || titles.home });
+    }
+  },[route.page]);
+
+  // Bump homeKey when navigating back to home
   useEffect(()=>{
     let prev = route.page;
     const fn = ()=>{
@@ -49,40 +103,27 @@ const App = () => {
     return ()=>window.removeEventListener('hashchange', fn);
   },[]);
 
-  // ── Auth: use onAuthStateChange exclusively ───────────────
-  // Supabase fires INITIAL_SESSION on every page load with the
-  // persisted session from localStorage — no need for getSession.
-  // This is the only source of truth for auth state.
+  // Auth — onAuthStateChange only (INITIAL_SESSION fires on load)
   useEffect(()=>{
-    // Safety net: if Supabase never fires, show app after 3s
     const timeout = setTimeout(()=>setAuthReady(true), 3000);
-
     const { data:{ subscription } } = db.auth.onAuthStateChange(
       async (event, session) => {
         clearTimeout(timeout);
-
         if (session?.user) {
           try {
             const { data: profile } = await db.from('profiles')
               .select('*').eq('id', session.user.id).single();
-            setUser({
-              ...session.user,
+            setUser({ ...session.user,
               username:  profile?.username  || null,
               age_range: profile?.age_range || null,
-              gender:    profile?.gender    || null,
-            });
-          } catch(_) {
-            // Profile fetch failed — set user without profile data
-            setUser(session.user);
-          }
+              gender:    profile?.gender    || null });
+          } catch(_) { setUser(session.user); }
         } else {
           setUser(null);
         }
-
         setAuthReady(true);
       }
     );
-
     return ()=>{ clearTimeout(timeout); subscription.unsubscribe(); };
   },[]);
 
