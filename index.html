@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consensus - World's Opinions Live</title>
+  <!-- Tailwind CSS CDN (for beautiful styling) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM (production minified) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- React Router DOM for multi-page feel -->
+  <script src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.production.min.js"></script>
+  <!-- Recharts for live pie/bar charts -->
+  <script src="https://unpkg.com/recharts@2/umd/Recharts.min.js"></script>
+  <!-- html2canvas for screenshot/share cards -->
+  <script src="https://unpkg.com/html2canvas@1/dist/html2canvas.min.js"></script>
+  <!-- Supabase client for realtime DB & votes -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-950 text-white m-0 font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel" src="./src/main.js"></script>
+  <!-- Note: type="text/babel" + src points to your main logic file -->
+</body>
+</html>
