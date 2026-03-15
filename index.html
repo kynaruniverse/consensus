@@ -3,25 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Consensus - World's Opinions Live</title>
-  <!-- Tailwind CSS CDN (for beautiful styling) -->
+  <title>Consensus — The World's Opinion, Live</title>
+  <meta name="description" content="Vote on any question and see how the entire world responds — live, beautiful, shareable." />
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React & ReactDOM (production minified) -->
+
+  <!-- Babel — REQUIRED for JSX. Must load BEFORE main.js -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- React 18 -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- React Router DOM for multi-page feel -->
+
+  <!-- React Router (HashRouter — required for GitHub Pages) -->
   <script src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.production.min.js"></script>
-  <!-- Recharts for live pie/bar charts -->
+
+  <!-- Recharts for live charts -->
   <script src="https://unpkg.com/recharts@2/umd/Recharts.min.js"></script>
-  <!-- html2canvas for screenshot/share cards -->
+
+  <!-- html2canvas for shareable screenshot cards -->
   <script src="https://unpkg.com/html2canvas@1/dist/html2canvas.min.js"></script>
-  <!-- Supabase client for realtime DB & votes -->
+
+  <!-- Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { overscroll-behavior-y: none; }
+    .vote-bar { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .live-dot { animation: pulse-dot 1.5s infinite; }
+  </style>
 </head>
 <body class="bg-gray-950 text-white m-0 font-sans">
   <div id="root"></div>
 
+  <!-- type="text/babel" tells Babel to transpile JSX -->
   <script type="text/babel" src="./src/main.js"></script>
-  <!-- Note: type="text/babel" + src points to your main logic file -->
 </body>
 </html>
