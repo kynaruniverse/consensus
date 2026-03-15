@@ -1,5 +1,6 @@
 // js/nav.js
-import { e, div, span, db } from './db.js';
+import { e, div, span, db }       from './db.js';
+import { NotificationBell }        from './notifications.js';
 
 export const NavBar = ({ user }) =>
   e('nav', { style:{position:'fixed',top:0,left:0,right:0,zIndex:100,
@@ -28,19 +29,21 @@ export const NavBar = ({ user }) =>
         e('a', { href:'#/post',
           style:{background:'linear-gradient(135deg,#6366f1,#4f46e5)',color:'white',
             padding:'8px 16px',borderRadius:999,fontSize:13,fontWeight:700,
-            textDecoration:'none',
-            boxShadow:'0 2px 12px rgba(99,102,241,0.4)'} },
+            textDecoration:'none',boxShadow:'0 2px 12px rgba(99,102,241,0.4)'} },
           '+ Ask'
         ),
 
-        // Avatar or sign in
+        // Bell (signed in only) + avatar or sign in
         user
-          ? e('a', { href:'#/profile',
-              style:{width:32,height:32,borderRadius:'50%',flexShrink:0,
-                background:'linear-gradient(135deg,#6366f1,#a78bfa)',
-                display:'flex',alignItems:'center',justifyContent:'center',
-                fontSize:13,fontWeight:900,color:'white',textDecoration:'none'} },
-              (user.username||user.email||'?')[0].toUpperCase()
+          ? div({ style:{display:'flex',alignItems:'center',gap:8} },
+              e(NotificationBell, { user }),
+              e('a', { href:'#/profile',
+                style:{width:32,height:32,borderRadius:'50%',flexShrink:0,
+                  background:'linear-gradient(135deg,#6366f1,#a78bfa)',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontSize:13,fontWeight:900,color:'white',textDecoration:'none'} },
+                (user.username||user.email||'?')[0].toUpperCase()
+              )
             )
           : e('a', { href:'#/auth',
               style:{fontSize:13,fontWeight:600,color:'#64748b',

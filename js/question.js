@@ -1,6 +1,7 @@
 // js/question.js
 import { e, div, span, p, db, COLORS, CATEGORIES, getFlag } from './db.js';
 import { setPageMeta } from './app.js';
+import { createNotification } from './notifications.js';
 const { useState, useEffect } = React;
 
 // ── Canvas helpers ────────────────────────────────────────────
@@ -230,7 +231,7 @@ export const QuestionPage = ({ id, user }) => {
       const opts    = data.options.join(' vs ');
       const rawDesc = data.question_text + ' — ' + opts + '. Vote now and see live results from around the world.';
       const desc    = rawDesc.length > 160 ? rawDesc.slice(0,157)+'...' : rawDesc;
-      const pageUrl = 'https://spitfact.netlify.app/#/q/' + data.id;
+      const pageUrl = 'https://kynaruniverse.github.io/spitfact/#/q/' + data.id;
       setPageMeta({ title: data.question_text + ' · Spitfact', description: desc, url: pageUrl });
 
       // JSON-LD structured data so Google understands this is a poll
@@ -274,6 +275,17 @@ export const QuestionPage = ({ id, user }) => {
     if(error){alert('Vote failed: '+error.message);return;}
     setMyVote(index);localStorage.setItem('voted_'+id,String(index));
     setPredLocked(true);setTimeout(()=>setShowReveal(true),800);
+
+    // Notify question owner if it's not their own question
+    if (question?.created_by && question.created_by !== user?.id) {
+      const newTotal = votes.length + 1;
+      createNotification({
+        userId:       question.created_by,
+        questionId:   id,
+        questionText: question.question_text,
+        totalVotes:   newTotal,
+      });
+    }
   };
 
   const savePrediction=index=>{
