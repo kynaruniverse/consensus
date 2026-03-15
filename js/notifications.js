@@ -1,157 +1,133 @@
 // js/notifications.js
-import { e, div, span, p, db } from './db.js';
+// ─────────────────────────────────────────────────────────────────
+// Notification bell + dropdown. Converted to htm syntax.
+// Fixes: sequential inserts → batched, aria-label added.
+// ─────────────────────────────────────────────────────────────────
+import { db, timeAgo } from './db.js';
 const { useState, useEffect, useRef } = React;
 
-// ── Milestones that trigger a notification ────────────────────
+// ── Vote milestone thresholds ─────────────────────────────────────
 const MILESTONES = [10, 50, 100, 500, 1000];
 
-// ── createNotification ────────────────────────────────────────
-// Called from question.js after a vote lands on someone else's question
+// ── Create notifications after a vote ────────────────────────────
 export const createNotification = async ({ userId, questionId, questionText, totalVotes }) => {
   if (!userId) return;
 
   const notifs = [];
 
-  // Milestone notifications
   if (MILESTONES.includes(totalVotes)) {
     notifs.push({
       user_id:       userId,
       type:          'milestone',
       question_id:   questionId,
       question_text: questionText,
-      message:       'Your question hit '+totalVotes+' votes! 🎉',
+      message:       'Your question hit ' + totalVotes + ' votes! 🎉',
     });
-  }
-
-  // Every 10th vote (but not milestones to avoid double)
-  if (totalVotes > 0 && totalVotes % 10 === 0 && !MILESTONES.includes(totalVotes)) {
+  } else if (totalVotes > 0 && totalVotes % 10 === 0) {
     notifs.push({
       user_id:       userId,
       type:          'new_vote',
       question_id:   questionId,
       question_text: questionText,
-      message:       totalVotes+' people have voted on your question',
+      message:       totalVotes + ' people have voted on your question',
     });
   }
 
-  for (const n of notifs) {
-    await db.from('notifications').insert(n);
+  // Batch insert instead of sequential awaits
+  if (notifs.length > 0) {
+    await db.from('notifications').insert(notifs);
   }
 };
 
-// ── timeAgo ───────────────────────────────────────────────────
-const timeAgo = (ts) => {
-  const secs = Math.floor((Date.now() - new Date(ts)) / 1000);
-  if (secs < 60)  return 'just now';
-  if (secs < 3600) return Math.floor(secs/60)+'m ago';
-  if (secs < 86400) return Math.floor(secs/3600)+'h ago';
-  return Math.floor(secs/86400)+'d ago';
-};
-
-// ── NotifIcon ─────────────────────────────────────────────────
-const typeIcon = (type) => type === 'milestone' ? '🎉' : '🗳️';
-
-// ── NotificationDropdown ──────────────────────────────────────
+// ── Notification dropdown ─────────────────────────────────────────
 const NotificationDropdown = ({ notifications, onClose, onMarkAllRead }) => {
-  // Close on outside click
   const ref = useRef(null);
+
   useEffect(() => {
-    const fn = (ev) => { if (ref.current && !ref.current.contains(ev.target)) onClose(); };
+    const fn = (ev) => {
+      if (ref.current && !ref.current.contains(ev.target)) onClose();
+    };
     setTimeout(() => document.addEventListener('mousedown', fn), 0);
     return () => document.removeEventListener('mousedown', fn);
   }, []);
 
-  return div({ ref, style:{
-    position:'absolute', top:'calc(100% + 8px)', right:0,
-    width:320, maxHeight:420, overflowY:'auto',
-    background:'#0d1424',
-    border:'1px solid rgba(129,140,248,0.25)',
-    borderRadius:18, boxShadow:'0 16px 48px rgba(0,0,0,0.5)',
-    zIndex:200,
-  }},
-    // Header
-    div({ style:{
-      display:'flex', justifyContent:'space-between', alignItems:'center',
-      padding:'14px 16px 10px', borderBottom:'1px solid #1a2540'
-    }},
-      span({ style:{fontSize:14,fontWeight:800,color:'#f1f5f9'} }, 'Notifications'),
-      notifications.some(n=>!n.read) && e('button', {
-        onClick: onMarkAllRead,
-        style:{background:'none',border:'none',color:'#818cf8',fontSize:12,
-          fontWeight:600,cursor:'pointer',padding:0}
-      }, 'Mark all read')
-    ),
+  const typeIcon  = (type) => type === 'milestone' ? '🎉' : '🗳️';
+  const typeColor = (type) => type === 'milestone'
+    ? 'linear-gradient(135deg,rgba(251,191,36,0.2),rgba(249,115,22,0.2))'
+    : 'rgba(99,102,241,0.15)';
 
-    // List
-    notifications.length === 0
-      ? div({ style:{textAlign:'center',padding:'32px 16px',color:'#334155'} },
-          div({style:{fontSize:32,marginBottom:8}},'🔔'),
-          p({style:{fontSize:14,color:'#475569'}},'No notifications yet'),
-          p({style:{fontSize:12,color:'#334155',marginTop:4}},
-            'You\'ll see updates when people vote on your questions')
-        )
-      : div(null,
-          ...notifications.slice(0,20).map(n =>
-            e('a', {
-              key:n.id,
-              href:'#/q/'+n.question_id,
-              onClick: onClose,
-              style:{
-                display:'flex', gap:12, padding:'12px 16px',
-                borderBottom:'1px solid #1a2540',
-                textDecoration:'none', color:'white',
-                background: n.read ? 'transparent' : 'rgba(99,102,241,0.04)',
-                transition:'background 0.15s',
-              }
-            },
-              // Icon
-              div({ style:{
-                width:36, height:36, borderRadius:'50%', flexShrink:0,
-                background: n.type==='milestone'
-                  ? 'linear-gradient(135deg,rgba(251,191,36,0.2),rgba(249,115,22,0.2))'
-                  : 'rgba(99,102,241,0.15)',
-                display:'flex', alignItems:'center', justifyContent:'center', fontSize:16
-              }}, typeIcon(n.type)),
+  return html`
+    <div ref=${ref} role="dialog" aria-label="Notifications"
+      class="absolute top-[calc(100%+8px)] right-0 w-80 max-h-[420px] overflow-y-auto rounded-[18px] shadow-2xl z-[200]"
+      style="background:#0d1424;border:1px solid rgba(129,140,248,0.25)">
 
-              // Text
-              div({ style:{flex:1,minWidth:0} },
-                p({ style:{fontSize:13,fontWeight:600,color:'#f1f5f9',
-                  marginBottom:3,lineHeight:1.4} }, n.message),
-                p({ style:{fontSize:11,color:'#475569',
-                  overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis',
-                  marginBottom:3} }, n.question_text),
-                span({ style:{fontSize:11,color:'#334155'} }, timeAgo(n.created_at))
-              ),
+      <!-- Header -->
+      <div class="flex justify-between items-center px-4 py-3 border-b border-border1 sticky top-0"
+        style="background:#0d1424">
+        <span class="text-sm font-black text-slate-100">Notifications</span>
+        ${notifications.some(n => !n.read) && html`
+          <button onClick=${onMarkAllRead}
+            class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 bg-none border-none cursor-pointer transition-colors">
+            Mark all read
+          </button>
+        `}
+      </div>
 
-              // Unread dot
-              !n.read && div({ style:{
-                width:7, height:7, borderRadius:'50%',
-                background:'#6366f1', flexShrink:0, marginTop:4,
-                boxShadow:'0 0 6px rgba(99,102,241,0.6)'
-              }})
-            )
-          )
-        ),
+      <!-- List -->
+      ${notifications.length === 0
+        ? html`
+          <div class="text-center py-8 px-4">
+            <div class="text-3xl mb-2">🔔</div>
+            <p class="text-sm text-slate-500">No notifications yet</p>
+            <p class="text-xs text-slate-600 mt-1">You'll see updates when people vote on your questions</p>
+          </div>
+        `
+        : html`
+          <div>
+            ${notifications.slice(0, 20).map(n => html`
+              <a key=${n.id} href=${'#/q/' + n.question_id} onClick=${onClose}
+                class=${'flex gap-3 px-4 py-3 border-b border-border1 no-underline text-white transition-colors ' + (n.read ? '' : 'bg-indigo-500/[0.04]')}
+                style="display:flex">
+                <!-- Icon -->
+                <div class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-base"
+                  style=${'background:' + typeColor(n.type)}>
+                  ${typeIcon(n.type)}
+                </div>
+                <!-- Text -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13px] font-semibold text-slate-100 mb-0.5 leading-tight">${n.message}</p>
+                  <p class="text-[11px] text-slate-500 truncate mb-0.5">${n.question_text}</p>
+                  <span class="text-[11px] text-slate-600">${timeAgo(n.created_at)}</span>
+                </div>
+                <!-- Unread dot -->
+                ${!n.read && html`
+                  <div class="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-1"
+                    style="box-shadow:0 0 6px rgba(99,102,241,0.6)"></div>
+                `}
+              </a>
+            `)}
+          </div>
+        `
+      }
 
-    // Footer
-    notifications.length > 0 && div({ style:{
-      padding:'10px 16px', borderTop:'1px solid #1a2540', textAlign:'center'
-    }},
-      span({ style:{fontSize:12,color:'#334155'} },
-        'Showing last '+Math.min(notifications.length,20)+' notifications'
-      )
-    )
-  );
+      <!-- Footer -->
+      ${notifications.length > 0 && html`
+        <div class="text-center py-2.5 border-t border-border1">
+          <span class="text-xs text-slate-600">
+            Showing last ${Math.min(notifications.length, 20)} notifications
+          </span>
+        </div>
+      `}
+    </div>
+  `;
 };
 
-// ── NotificationBell ──────────────────────────────────────────
-// Drop this into the NavBar when user is signed in
+// ── Bell button ───────────────────────────────────────────────────
 export const NotificationBell = ({ user }) => {
   const [notifications, setNotifications] = useState([]);
   const [open,          setOpen]          = useState(false);
-  const unread = notifications.filter(n=>!n.read).length;
+  const unread = notifications.filter(n => !n.read).length;
 
-  // Load notifications
   const load = async () => {
     if (!user?.id) return;
     const { data } = await db.from('notifications')
@@ -159,18 +135,17 @@ export const NotificationBell = ({ user }) => {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20);
-    setNotifications(data||[]);
+    setNotifications(data || []);
   };
 
   useEffect(() => {
     if (!user?.id) return;
     load();
 
-    // Realtime — badge updates instantly when a new notification is inserted
-    const ch = db.channel('notifs:'+user.id)
+    const ch = db.channel('notifs:' + user.id)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'notifications',
-        filter: 'user_id=eq.'+user.id
+        filter: 'user_id=eq.' + user.id,
       }, () => load())
       .subscribe();
 
@@ -180,7 +155,6 @@ export const NotificationBell = ({ user }) => {
   const toggleOpen = async () => {
     const wasOpen = open;
     setOpen(!open);
-    // Mark all as read when opening
     if (!wasOpen && unread > 0) {
       await db.from('notifications')
         .update({ read: true })
@@ -198,37 +172,31 @@ export const NotificationBell = ({ user }) => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  return div({ style:{position:'relative'} },
-    // Bell button
-    e('button', {
-      onClick: toggleOpen,
-      style:{
-        position:'relative', width:34, height:34, borderRadius:'50%',
-        border:'1px solid '+(open?'rgba(129,140,248,0.5)':'rgba(129,140,248,0.2)'),
-        background: open ? 'rgba(99,102,241,0.15)' : 'rgba(99,102,241,0.06)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        cursor:'pointer', transition:'all 0.15s', fontSize:15,
-        color: unread > 0 ? '#818cf8' : '#64748b'
-      }
-    },
-      '🔔',
-      // Unread badge
-      unread > 0 && div({ style:{
-        position:'absolute', top:-3, right:-3,
-        minWidth:16, height:16, borderRadius:999,
-        background:'linear-gradient(135deg,#6366f1,#4f46e5)',
-        color:'white', fontSize:9, fontWeight:900,
-        display:'flex', alignItems:'center', justifyContent:'center',
-        padding:'0 4px', boxShadow:'0 0 8px rgba(99,102,241,0.6)',
-        border:'1.5px solid #020817'
-      }}, unread > 9 ? '9+' : String(unread))
-    ),
+  return html`
+    <div class="relative">
+      <button
+        onClick=${toggleOpen}
+        aria-label=${'Notifications' + (unread > 0 ? ', ' + unread + ' unread' : '')}
+        aria-haspopup="dialog"
+        aria-expanded=${open}
+        class=${'relative w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer transition-all text-[15px] border ' + (open ? 'border-indigo-400/50 bg-indigo-500/15 text-indigo-400' : 'border-indigo-400/20 bg-indigo-500/[0.06] ' + (unread > 0 ? 'text-indigo-400' : 'text-slate-500'))}
+      >
+        🔔
+        ${unread > 0 && html`
+          <div class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white text-[9px] font-black flex items-center justify-center px-1"
+            style="box-shadow:0 0 8px rgba(99,102,241,0.6);border:1.5px solid #020817">
+            ${unread > 9 ? '9+' : String(unread)}
+          </div>
+        `}
+      </button>
 
-    // Dropdown
-    open && e(NotificationDropdown, {
-      notifications,
-      onClose: () => setOpen(false),
-      onMarkAllRead: markAllRead
-    })
-  );
+      ${open && html`
+        <${NotificationDropdown}
+          notifications=${notifications}
+          onClose=${() => setOpen(false)}
+          onMarkAllRead=${markAllRead}
+        />
+      `}
+    </div>
+  `;
 };

@@ -1,8 +1,13 @@
 // js/home.js
-import { e, div, span, p, db, COLORS, CATEGORIES } from './db.js';
-const { useState, useEffect } = React;
+// ─────────────────────────────────────────────────────────────────
+// Home (landing) + FeedPage. htm syntax, Tailwind classes.
+// New: search bar with Supabase full-text search.
+// ─────────────────────────────────────────────────────────────────
+import { db, COLORS, CATEGORIES, getFlag } from './db.js';
+const { useState, useEffect, useCallback } = React;
+const { useSearchParams }                  = ReactRouterDOM;
 
-// ── useCountUp ────────────────────────────────────────────────
+// ── useCountUp ────────────────────────────────────────────────────
 const useCountUp = (target) => {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -19,456 +24,418 @@ const useCountUp = (target) => {
   return val;
 };
 
-// ── StatBlock ─────────────────────────────────────────────────
+// ── StatBlock ─────────────────────────────────────────────────────
 const StatBlock = ({ value, label, grad }) => {
   const c = useCountUp(value);
-  return div({ className:'stat-block' },
-    div({ className:'stat-num count-in', style:{
-      background: grad,
-      WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'
-    }}, c.toLocaleString()),
-    div({ className:'stat-lbl' }, label)
-  );
+  return html`
+    <div class="flex-1 text-center py-5 px-2">
+      <div class="text-[30px] font-black tracking-tight leading-none mb-1 count-in"
+        style=${'background:' + grad + ';-webkit-background-clip:text;-webkit-text-fill-color:transparent'}>
+        ${c.toLocaleString()}
+      </div>
+      <div class="text-[10px] font-bold uppercase tracking-widest text-slate-600">${label}</div>
+    </div>
+  `;
 };
 
-// ── FeaturedQuestion ──────────────────────────────────────────
+// ── FeaturedQuestion ──────────────────────────────────────────────
 const FeaturedQuestion = ({ question, recentVotes }) => {
   if (!question) return null;
   const rv = recentVotes || 0;
 
-  return div({ style:{marginBottom:32} },
-    div({ className:'s-label' },
-      span({ style:{color:'#f97316', fontSize:14} }, '🔥'),
-      span(null, 'Trending Right Now')
-    ),
-    e('a', { href:'#/q/'+question.id, className:'g-card-hot', style:{display:'block', padding:24, position:'relative', overflow:'hidden', textDecoration:'none', color:'white'} },
-      div({ style:{position:'absolute',top:-60,right:-40,width:180,height:180,
-        background:'radial-gradient(circle,rgba(34,211,238,0.14),transparent 70%)',pointerEvents:'none'} }),
-      div({ style:{position:'absolute',bottom:-40,left:-20,width:140,height:140,
-        background:'radial-gradient(circle,rgba(129,140,248,0.12),transparent 70%)',pointerEvents:'none'} }),
+  return html`
+    <div class="mb-8">
+      <div class="flex items-center gap-2.5 mb-3.5">
+        <span class="text-sm">🔥</span>
+        <span class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Trending Right Now</span>
+        <div class="flex-1 h-px" style="background:linear-gradient(90deg,#1e293b,transparent)"></div>
+      </div>
 
-      div({ style:{display:'flex',alignItems:'center',gap:8,marginBottom:14} },
-        e('span', { className:'live-dot-cyan' }),
-        span({ style:{fontSize:12,color:'#67e8f9',fontWeight:600} },
-          rv > 0 ? rv+' votes in last 24h' : 'Hottest question right now'
-        )
-      ),
+      <a href=${'#/q/' + question.id}
+        class="g-border-hot block rounded-[24px] p-6 relative overflow-hidden no-underline text-white transition-all hover:-translate-y-0.5 hover:shadow-card">
+        <!-- Glow orbs -->
+        <div class="absolute -top-[60px] -right-[40px] w-[180px] h-[180px] pointer-events-none"
+          style="background:radial-gradient(circle,rgba(34,211,238,0.14),transparent 70%)"></div>
+        <div class="absolute -bottom-[40px] -left-[20px] w-[140px] h-[140px] pointer-events-none"
+          style="background:radial-gradient(circle,rgba(129,140,248,0.12),transparent 70%)"></div>
 
-      e('h2', { style:{fontSize:21,fontWeight:900,lineHeight:1.35,color:'#f1f5f9',
-        marginBottom:18,letterSpacing:'-0.4px',position:'relative'} },
-        question.question_text
-      ),
+        <div class="flex items-center gap-2 mb-3.5 relative">
+          <span class="live-dot-cyan"></span>
+          <span class="text-[12px] text-cyan-300 font-semibold">
+            ${rv > 0 ? rv + ' votes in last 24h' : 'Hottest question right now'}
+          </span>
+        </div>
 
-      div({ style:{display:'flex',flexDirection:'column',gap:8,marginBottom:18,position:'relative'} },
-        ...question.options.slice(0,3).map((opt,i) =>
-          div({ key:i, style:{
-            padding:'11px 16px', borderRadius:12,
-            border:'1px solid '+COLORS[i%COLORS.length]+'40',
-            background:COLORS[i%COLORS.length]+'12',
-            display:'flex',alignItems:'center',gap:10
-          }},
-            span({ style:{width:20,height:20,borderRadius:'50%',flexShrink:0,
-              background:COLORS[i%COLORS.length]+'25',color:COLORS[i%COLORS.length],
-              display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800} }, i+1),
-            span({ style:{fontSize:14,fontWeight:600,color:COLORS[i%COLORS.length]} }, opt)
-          )
-        ),
-        question.options.length > 3 &&
-          span({ style:{fontSize:12,color:'#475569',paddingLeft:4} },
-            '+'+(question.options.length-3)+' more options'
-          )
-      ),
+        <h2 class="text-[21px] font-black leading-[1.35] text-slate-100 mb-5 tracking-tight relative">
+          ${question.question_text}
+        </h2>
 
-      div({ style:{display:'flex',alignItems:'center',justifyContent:'space-between',position:'relative'} },
-        span({ style:{fontSize:12,color:'#475569'} }, 'Tap to vote & see live results'),
-        span({ style:{fontSize:13,fontWeight:700,color:'#22d3ee',display:'flex',alignItems:'center',gap:4} },
-          'Vote now ', span({style:{fontSize:16}},'→')
-        )
-      )
-    )
-  );
+        <div class="flex flex-col gap-2 mb-5 relative">
+          ${question.options.slice(0, 3).map((opt, i) => html`
+            <div key=${i} class="flex items-center gap-2.5 px-4 py-2.5 rounded-[12px]"
+              style=${'border:1px solid ' + COLORS[i % COLORS.length] + '40;background:' + COLORS[i % COLORS.length] + '12'}>
+              <span class="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] font-black"
+                style=${'background:' + COLORS[i % COLORS.length] + '25;color:' + COLORS[i % COLORS.length]}>
+                ${i + 1}
+              </span>
+              <span class="text-[14px] font-semibold" style=${'color:' + COLORS[i % COLORS.length]}>${opt}</span>
+            </div>
+          `)}
+          ${question.options.length > 3 && html`
+            <span class="text-[12px] text-slate-600 pl-1">+${question.options.length - 3} more options</span>
+          `}
+        </div>
+
+        <div class="flex items-center justify-between relative">
+          <span class="text-[12px] text-slate-500">Tap to vote & see live results</span>
+          <span class="text-[13px] font-bold text-cyan-400 flex items-center gap-1">Vote now <span class="text-base">→</span></span>
+        </div>
+      </a>
+    </div>
+  `;
 };
 
-// ── TrendingCard ──────────────────────────────────────────────
-const TrendingCard = ({ question, voteCount }) => {
-  const voted = localStorage.getItem('voted_'+question.id) !== null;
-  return e('a', { href:'#/q/'+question.id, className:'trend-card' },
-    div({ style:{display:'flex',gap:4,marginBottom:10,flexWrap:'wrap'} },
-      ...question.options.slice(0,2).map((opt,i) =>
-        span({ key:i, style:{
-          fontSize:10,padding:'2px 8px',borderRadius:999,fontWeight:600,
-          border:'1px solid '+COLORS[i%COLORS.length]+'45',
-          color:COLORS[i%COLORS.length],background:COLORS[i%COLORS.length]+'15',
-          whiteSpace:'nowrap',overflow:'hidden',maxWidth:80,textOverflow:'ellipsis'
-        }}, opt)
-      )
-    ),
-    p({ style:{fontSize:13,fontWeight:700,lineHeight:1.4,color:'#e2e8f0',
-      marginBottom:14,overflow:'hidden',display:'-webkit-box',
-      WebkitLineClamp:2,WebkitBoxOrient:'vertical'} },
-      question.question_text
-    ),
-    div({ style:{display:'flex',justifyContent:'space-between',alignItems:'center'} },
-      span({ style:{fontSize:11,color:'#475569'} }, (voteCount||0)+' votes'),
-      span({ style:{fontSize:11,fontWeight:700,
-        color:voted?'#10b981':'#6366f1',
-        background:voted?'rgba(16,185,129,0.1)':'rgba(99,102,241,0.1)',
-        padding:'3px 9px',borderRadius:999,
-        border:'1px solid '+(voted?'rgba(16,185,129,0.25)':'rgba(99,102,241,0.25)')} },
-        voted?'✓':'→'
-      )
-    )
-  );
-};
-
-// ── CategoryTile ──────────────────────────────────────────────
-const CategoryTile = ({ cat, count }) =>
-  e('a', {
-    href: '#/feed?cat='+cat.id,
-    className: 'cat-tile',
-    style:{
-      borderColor: cat.color+'35',
-      background: cat.color+'0d',
-      textDecoration:'none',color:'white'
-    }
-  },
-    div({ style:{fontSize:22,marginBottom:6} }, cat.label.split(' ')[0]),
-    div({ style:{fontSize:13,fontWeight:700,color:'#e2e8f0',marginBottom:3,letterSpacing:'-0.2px'} },
-      cat.label.split(' ').slice(1).join(' ')
-    ),
-    div({ style:{fontSize:11,fontWeight:600,color:cat.color+'99'} },
-      count ? count+' question'+(count!==1?'s':'') : 'Post first'
-    )
-  );
-
-// ── QuestionCard (feed) ───────────────────────────────────────
+// ── QuestionCard (feed) ───────────────────────────────────────────
 const QuestionCard = ({ question, voteCount, recentCount }) => {
-  const voted    = localStorage.getItem('voted_'+question.id) !== null;
+  const voted    = localStorage.getItem('voted_' + question.id) !== null;
   const trending = recentCount >= 3;
   const hot      = voteCount >= 10;
-  const cat      = CATEGORIES.find(c=>c.id===question.category);
+  const cat      = CATEGORIES.find(c => c.id === question.category);
 
-  return e('a', { href:'#/q/'+question.id, className:'fcard' },
-    div({ style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:12} },
-      p({ style:{fontSize:16,fontWeight:700,lineHeight:1.45,color:'#f1f5f9',flex:1,margin:0,letterSpacing:'-0.2px'} },
-        question.question_text
-      ),
-      div({ style:{display:'flex',gap:4,flexShrink:0,marginTop:2} },
-        trending && span({ style:{fontSize:10,fontWeight:700,color:'#f97316',
-          background:'rgba(249,115,22,0.12)',border:'1px solid rgba(249,115,22,0.3)',
-          borderRadius:999,padding:'3px 8px'} }, '🔥'),
-        hot && !trending && span({ style:{fontSize:10,fontWeight:700,color:'#fbbf24',
-          background:'rgba(251,191,36,0.12)',border:'1px solid rgba(251,191,36,0.3)',
-          borderRadius:999,padding:'3px 8px'} }, 'HOT')
-      )
-    ),
-    div({ style:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8} },
-      div({ style:{display:'flex',gap:5,flexWrap:'wrap',flex:1,minWidth:0,alignItems:'center'} },
-        cat && cat.id!=='General' && span({ style:{
-          fontSize:10,padding:'2px 8px',borderRadius:999,fontWeight:700,flexShrink:0,
-          border:'1px solid '+cat.color+'40',color:cat.color,background:cat.color+'12'
-        }}, cat.label),
-        ...question.options.slice(0,2).map((opt,i) =>
-          span({ key:i, style:{fontSize:11,padding:'3px 9px',borderRadius:999,whiteSpace:'nowrap',
-            border:'1px solid '+COLORS[i%COLORS.length]+'40',
-            color:COLORS[i%COLORS.length],background:COLORS[i%COLORS.length]+'18',fontWeight:500} }, opt)
-        ),
-        question.options.length > 2 &&
-          span({ style:{fontSize:11,color:'#334155',padding:'3px 0'} },
-            '+'+(question.options.length-2)+' more')
-      ),
-      div({ style:{display:'flex',alignItems:'center',gap:6,flexShrink:0} },
-        voteCount > 0 && span({ style:{fontSize:12,color:'#334155',fontWeight:500} },
-          voteCount+(voteCount===1?' vote':' votes')
-        ),
-        span({ style:{fontSize:12,fontWeight:700,
-          color:voted?'#10b981':'#818cf8',
-          background:voted?'rgba(16,185,129,0.1)':'rgba(99,102,241,0.1)',
-          padding:'4px 10px',borderRadius:999,
-          border:'1px solid '+(voted?'rgba(16,185,129,0.25)':'rgba(99,102,241,0.25)')} },
-          voted?'✓':'→'
-        )
-      )
-    )
-  );
+  return html`
+    <a href=${'#/q/' + question.id}
+      class="g-border-subtle block no-underline text-white rounded-[18px] p-5 transition-all hover:-translate-y-0.5 hover:shadow-card active:scale-[0.99]">
+
+      <div class="flex justify-between items-start gap-2 mb-3">
+        <p class="text-[16px] font-bold leading-[1.45] text-slate-100 flex-1 m-0 tracking-tight">
+          ${question.question_text}
+        </p>
+        <div class="flex gap-1 flex-shrink-0 mt-0.5">
+          ${trending && html`<span class="text-[10px] font-bold text-orange-400 bg-orange-500/12 border border-orange-500/30 rounded-full px-2 py-0.5">🔥</span>`}
+          ${hot && !trending && html`<span class="text-[10px] font-bold text-amber-400 bg-amber-500/12 border border-amber-500/30 rounded-full px-2 py-0.5">HOT</span>`}
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center gap-2">
+        <div class="flex gap-1.5 flex-wrap flex-1 min-w-0 items-center">
+          ${cat && cat.id !== 'General' && html`
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+              style=${'border:1px solid ' + cat.color + '40;color:' + cat.color + ';background:' + cat.color + '12'}>
+              ${cat.label}
+            </span>
+          `}
+          ${question.options.slice(0, 2).map((opt, i) => html`
+            <span key=${i} class="text-[11px] px-2.5 py-0.5 rounded-full whitespace-nowrap font-medium"
+              style=${'border:1px solid ' + COLORS[i % COLORS.length] + '40;color:' + COLORS[i % COLORS.length] + ';background:' + COLORS[i % COLORS.length] + '18'}>
+              ${opt}
+            </span>
+          `)}
+          ${question.options.length > 2 && html`
+            <span class="text-[11px] text-slate-600 py-0.5">+${question.options.length - 2} more</span>
+          `}
+        </div>
+
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          ${voteCount > 0 && html`
+            <span class="text-[12px] text-slate-600 font-medium">
+              ${voteCount}${voteCount === 1 ? ' vote' : ' votes'}
+            </span>
+          `}
+          <span class=${'text-[12px] font-bold px-2 py-0.5 rounded-full border ' + (voted ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25' : 'text-indigo-400 bg-indigo-500/10 border-indigo-500/25')}>
+            ${voted ? '✓' : '→'}
+          </span>
+        </div>
+      </div>
+    </a>
+  `;
 };
 
-// ── Pill ─────────────────────────────────────────────────────
-const Pill = ({label, active, color, onClick}) =>
-  e('button', { onClick, style:{
-    padding:'7px 16px',borderRadius:999,border:'1px solid',fontSize:12,
-    fontWeight:700,cursor:'pointer',transition:'all 0.15s',whiteSpace:'nowrap',flexShrink:0,
-    borderColor: active ? (color||'#6366f1') : '#1a2540',
-    background:  active ? (color||'#6366f1')+'22' : 'transparent',
-    color:       active ? (color||'#818cf8') : '#64748b',
-  }}, label);
+// ── CategoryTile ──────────────────────────────────────────────────
+const CategoryTile = ({ cat, count }) => html`
+  <a href=${'#/feed?cat=' + cat.id}
+    class="p-4 rounded-[16px] border text-left block no-underline text-white transition-all hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+    style=${'border-color:' + cat.color + '35;background:' + cat.color + '0d'}>
+    <div class="text-[22px] mb-1.5">${cat.label.split(' ')[0]}</div>
+    <div class="text-[13px] font-bold text-slate-200 mb-0.5 tracking-tight">${cat.label.split(' ').slice(1).join(' ')}</div>
+    <div class="text-[11px] font-semibold" style=${'color:' + cat.color + '99'}>
+      ${count ? count + ' question' + (count !== 1 ? 's' : '') : 'Post first'}
+    </div>
+  </a>
+`;
 
-// ── Home (landing page) ───────────────────────────────────────
-export const Home = () => {
-  const [questions,    setQuestions]    = useState([]);
-  const [voteCounts,   setVoteCounts]   = useState({});
-  const [recentCounts, setRecentCounts] = useState({});
-  const [totalVotes,   setTotalVotes]   = useState(0);
+// ── Pill (filter) ─────────────────────────────────────────────────
+const Pill = ({ label, active, onClick, color }) => html`
+  <button
+    onClick=${onClick}
+    class=${'flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold border transition-all cursor-pointer ' + (active ? 'text-white border-transparent' : 'text-slate-500 border-border1 bg-transparent hover:border-border2 hover:text-slate-400')}
+    style=${active ? 'background:' + (color || '#6366f1') + '33;border-color:' + (color || '#818cf8') + '66;color:' + (color || '#818cf8') : ''}
+  >
+    ${label}
+  </button>
+`;
+
+// ── SearchBar ─────────────────────────────────────────────────────
+const SearchBar = ({ value, onChange }) => html`
+  <div class="relative mb-4">
+    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-sm pointer-events-none">🔍</span>
+    <input
+      type="search"
+      placeholder="Search questions..."
+      value=${value}
+      onInput=${ev => onChange(ev.target.value)}
+      class="w-full bg-surface border border-border1 text-slate-100 rounded-[14px] pl-10 pr-4 py-3 text-[14px] outline-none transition-all focus:border-indigo-500 focus:ring-[3px] focus:ring-indigo-500/15 placeholder:text-slate-600"
+    />
+  </div>
+`;
+
+// ── Home (landing) ────────────────────────────────────────────────
+export const Home = ({ user }) => {
+  const [stats,        setStats]        = useState({ questions: 0, votes: 0, countries: 0 });
+  const [featured,     setFeatured]     = useState(null);
+  const [trending,     setTrending]     = useState([]);
+  const [catCounts,    setCatCounts]    = useState({});
+  const [recentVotes,  setRecentVotes]  = useState(0);
   const [loading,      setLoading]      = useState(true);
 
   useEffect(() => {
-    const since24h = new Date(Date.now()-24*60*60*1000).toISOString();
+    const since24h = new Date(Date.now() - 86400000).toISOString();
+
     Promise.all([
-      db.from('questions').select('*').order('created_at',{ascending:false}),
-      db.from('votes').select('question_id'),
-      db.from('votes').select('question_id').gte('created_at', since24h)
-    ]).then(([{data:qs},{data:vs},{data:recent}]) => {
-      setQuestions(qs||[]);
-      setTotalVotes((vs||[]).length);
-      const counts  = (vs||[]).reduce((a,v)=>{ a[v.question_id]=(a[v.question_id]||0)+1; return a; },{});
-      const rcounts = (recent||[]).reduce((a,v)=>{ a[v.question_id]=(a[v.question_id]||0)+1; return a; },{});
-      setVoteCounts(counts);
-      setRecentCounts(rcounts);
+      db.from('questions').select('id', { count: 'exact', head: true }),
+      db.from('votes').select('id', { count: 'exact', head: true }),
+      db.from('votes').select('country_code').neq('country_code', 'XX').neq('country_code', null),
+      db.from('questions').select('id,question_text,options,category').order('created_at', { ascending: false }).limit(30),
+      db.from('votes').select('question_id').gte('created_at', since24h),
+    ]).then(([{ count: qCount }, { count: vCount }, { data: cData }, { data: questions }, { data: recentV }]) => {
+      const countries = new Set((cData || []).map(v => v.country_code)).size;
+      setStats({ questions: qCount || 0, votes: vCount || 0, countries });
+
+      const rcounts = (recentV || []).reduce((a, v) => {
+        a[v.question_id] = (a[v.question_id] || 0) + 1; return a;
+      }, {});
+
+      const sorted = (questions || []).sort((a, b) => (rcounts[b.id] || 0) - (rcounts[a.id] || 0));
+      setFeatured(sorted[0] || null);
+      setRecentVotes(rcounts[sorted[0]?.id] || 0);
+      setTrending(sorted.slice(1, 6));
+
+      const cc = {};
+      (questions || []).forEach(q => {
+        const c = q.category || 'General';
+        cc[c] = (cc[c] || 0) + 1;
+      });
+      setCatCounts(cc);
       setLoading(false);
     });
   }, []);
 
-  const featuredQ = !loading && questions.length > 0
-    ? questions.reduce((best,q) =>
-        (recentCounts[q.id]||0) > (recentCounts[best.id]||0) ? q : best
-      , questions[0])
-    : null;
+  if (loading) return html`
+    <div class="max-w-[640px] mx-auto px-4 pt-[90px] pb-[100px]">
+      ${[1, 2, 3].map(i => html`<div key=${i} class="skeleton h-24 mb-3"></div>`)}
+    </div>
+  `;
 
-  const trendingQs = [...questions]
-    .sort((a,b) => (recentCounts[b.id]||0)-(recentCounts[a.id]||0))
-    .filter(q => q.id !== featuredQ?.id)
-    .slice(0,8);
+  return html`
+    <div class="max-w-[640px] mx-auto px-4 pt-[90px] pb-[100px] page-in">
 
-  const catCounts = questions.reduce((acc,q) => {
-    const c = q.category||'General'; acc[c]=(acc[c]||0)+1; return acc;
-  }, {});
+      <!-- Hero tagline -->
+      <div class="text-center mb-8 mt-2">
+        <h1 class="text-[32px] font-black tracking-tight leading-tight text-slate-100 mb-2">
+          The World's Opinion,<br/><span style="background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Live.</span>
+        </h1>
+        <p class="text-slate-500 text-[15px] leading-relaxed">Vote on anything. See real-time results from around the planet.</p>
+        <div class="flex gap-3 justify-center mt-5 flex-wrap">
+          <a href="#/feed" class="btn-glow">📋 Browse Feed</a>
+          <a href="#/post"
+            class="px-6 py-3 rounded-full border border-indigo-400/35 text-indigo-400 text-[14px] font-bold transition-all hover:bg-indigo-400/10 hover:border-indigo-400 no-underline">
+            + Ask a question
+          </a>
+        </div>
+      </div>
 
-  const voteCountAnimated = useCountUp(loading ? 0 : totalVotes);
-  const questCountAnimated = useCountUp(loading ? 0 : questions.length);
+      <!-- Stats bar -->
+      <div class="g-border rounded-[20px] flex divide-x divide-border1 mb-8 overflow-hidden">
+        <${StatBlock} value=${stats.questions} label="Questions" grad="linear-gradient(135deg,#818cf8,#6366f1)" />
+        <${StatBlock} value=${stats.votes}     label="Votes"     grad="linear-gradient(135deg,#22d3ee,#0ea5e9)" />
+        <${StatBlock} value=${stats.countries} label="Countries" grad="linear-gradient(135deg,#e879f9,#a78bfa)" />
+      </div>
 
-  return div({ style:{background:'#020817', minHeight:'100vh'}, className:'page-in' },
+      <!-- Featured (trending) -->
+      <${FeaturedQuestion} question=${featured} recentVotes=${recentVotes} />
 
-    // ── HERO ────────────────────────────────────────────────
-    div({ style:{position:'relative', overflow:'hidden', paddingTop:58} },
+      <!-- Trending strip -->
+      ${trending.length > 0 && html`
+        <div class="mb-8">
+          <div class="flex items-center gap-2.5 mb-3.5">
+            <span class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Trending</span>
+            <div class="flex-1 h-px" style="background:linear-gradient(90deg,#1e293b,transparent)"></div>
+          </div>
+          <div class="scroll-x">
+            ${trending.map(q => html`
+              <a key=${q.id} href=${'#/q/' + q.id}
+                class="flex-shrink-0 w-[176px] g-border block rounded-[16px] p-4 no-underline text-white transition-all hover:-translate-y-0.5 hover:shadow-card active:scale-[0.97]">
+                <div class="flex gap-1 mb-2.5 flex-wrap">
+                  ${q.options.slice(0, 2).map((opt, i) => html`
+                    <span key=${i} class="text-[10px] font-semibold px-2 py-0.5 rounded-full truncate max-w-[80px]"
+                      style=${'border:1px solid ' + COLORS[i % COLORS.length] + '45;color:' + COLORS[i % COLORS.length] + ';background:' + COLORS[i % COLORS.length] + '15'}>
+                      ${opt}
+                    </span>
+                  `)}
+                </div>
+                <p class="text-[13px] font-bold leading-[1.4] text-slate-200 mb-3.5 line-clamp-2">${q.question_text}</p>
+                <span class="text-[11px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/25 px-2 py-0.5 rounded-full">→</span>
+              </a>
+            `)}
+          </div>
+        </div>
+      `}
 
-      // Dot grid background
-      div({ style:{position:'absolute',inset:0,
-        backgroundImage:'radial-gradient(rgba(129,140,248,0.11) 1px,transparent 1px)',
-        backgroundSize:'26px 26px',pointerEvents:'none'} }),
-
-      // Glow blobs
-      div({ style:{position:'absolute',top:'-20%',left:'-15%',width:'65%',height:'120%',
-        background:'radial-gradient(ellipse,rgba(99,102,241,0.22) 0%,transparent 60%)',pointerEvents:'none'} }),
-      div({ style:{position:'absolute',top:'10%',right:'-15%',width:'55%',height:'90%',
-        background:'radial-gradient(ellipse,rgba(6,182,212,0.12) 0%,transparent 60%)',pointerEvents:'none'} }),
-      div({ style:{position:'absolute',bottom:'-10%',left:'30%',width:'40%',height:'60%',
-        background:'radial-gradient(ellipse,rgba(232,121,249,0.08) 0%,transparent 60%)',pointerEvents:'none'} }),
-
-      div({ style:{position:'relative',zIndex:1,maxWidth:640,margin:'0 auto',
-        padding:'52px 20px 48px',textAlign:'center'} },
-
-        // Live badge
-        div({ style:{display:'inline-flex',alignItems:'center',gap:8,
-          background:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.18)',
-          borderRadius:999,padding:'6px 16px',fontSize:12,color:'#6ee7b7',marginBottom:28} },
-          e('span',{className:'live-dot'}),
-          span(null,'Live · real-time results')
-        ),
-
-        // Headline
-        e('h1', { style:{
-          fontSize:50,fontWeight:900,lineHeight:1.06,letterSpacing:'-2.5px',
-          marginBottom:16,
-          background:'linear-gradient(135deg, #e0e7ff 0%, #818cf8 45%, #22d3ee 100%)',
-          WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'
-        }}, 'The world votes.', e('br',null), 'Right now.'),
-
-        p({ style:{color:'#64748b',fontSize:16,lineHeight:1.65,marginBottom:36,
-          maxWidth:420,margin:'0 auto 36px'} },
-          'Ask anything. Get real answers from real people around the planet.'
-        ),
-
-        // CTA buttons
-        div({ style:{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap',marginBottom:44} },
-          e('a', { href:'#/post', className:'btn-glow' }, '+ Ask the World'),
-          e('a', { href:'#/feed', className:'btn-outline' }, 'Browse Feed →')
-        ),
-
-        // Stats strip
-        !loading && div({ style:{
-          display:'flex', maxWidth:380, margin:'0 auto',
-          background:'rgba(255,255,255,0.025)',
-          border:'1px solid rgba(255,255,255,0.06)',
-          borderRadius:20,overflow:'hidden'
-        }},
-          e(StatBlock,{value:voteCountAnimated,label:'Votes',grad:'linear-gradient(135deg,#818cf8,#22d3ee)'}),
-          div({style:{width:1,background:'rgba(255,255,255,0.05)'}}),
-          e(StatBlock,{value:questCountAnimated,label:'Questions',grad:'linear-gradient(135deg,#22d3ee,#e879f9)'}),
-          div({style:{width:1,background:'rgba(255,255,255,0.05)'}}),
-          e(StatBlock,{value:47,label:'Countries',grad:'linear-gradient(135deg,#e879f9,#818cf8)'})
-        ),
-
-        loading && div({ style:{height:72} })
-      )
-    ),
-
-    // ── CONTENT SECTIONS ──────────────────────────────────
-    div({ style:{maxWidth:640,margin:'0 auto',padding:'32px 16px 80px'} },
-
-      // Featured question
-      !loading && featuredQ && e(FeaturedQuestion,{
-        question:featuredQ,
-        recentVotes:recentCounts[featuredQ.id]||0
-      }),
-
-      // Trending horizontal scroll
-      !loading && trendingQs.length > 0 && div({ style:{marginBottom:36} },
-        div({ className:'s-label' },
-          span({style:{color:'#818cf8',fontSize:11}},'↑'),
-          span(null,'Trending Now')
-        ),
-        div({ className:'scroll-x' },
-          ...trendingQs.map(q =>
-            e(TrendingCard,{key:q.id,question:q,voteCount:voteCounts[q.id]||0})
-          ),
-          e('a',{ href:'#/feed', style:{
-            display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-            flexShrink:0,width:100,minHeight:120,
-            background:'rgba(99,102,241,0.07)',
-            border:'1px solid rgba(99,102,241,0.2)',
-            borderRadius:16,textDecoration:'none',
-            color:'#818cf8',gap:8,textAlign:'center',padding:16
-          }},
-            span({style:{fontSize:28,lineHeight:1}},'→'),
-            span({style:{fontSize:12,fontWeight:700}},'See all')
-          )
-        )
-      ),
-
-      // Loading skeletons
-      loading && div({ style:{display:'flex',flexDirection:'column',gap:12,marginBottom:32} },
-        ...[1,2].map(i => div({key:i,className:'skeleton',style:{height:80}}))
-      ),
-
-      // Categories
-      div({ style:{marginBottom:36} },
-        div({ className:'s-label' },
-          span({style:{color:'#818cf8',fontSize:11}},'#'),
-          span(null,'Explore Topics')
-        ),
-        div({ className:'cat-grid' },
-          ...CATEGORIES.map(cat =>
-            e(CategoryTile,{key:cat.id,cat,count:catCounts[cat.id]||0})
-          )
-        )
-      ),
-
-      // Ask CTA card
-      div({ style:{
-        background:'linear-gradient(#0d1424,#0d1424) padding-box, linear-gradient(135deg,rgba(129,140,248,0.45),rgba(34,211,238,0.25)) border-box',
-        border:'1px solid transparent',borderRadius:24,
-        padding:'28px 24px',textAlign:'center'
-      }},
-        div({style:{fontSize:36,marginBottom:12}},'🌍'),
-        e('h3',{style:{fontSize:22,fontWeight:900,marginBottom:8,letterSpacing:'-0.5px',color:'#f1f5f9'}},
-          'Got a take?'
-        ),
-        p({style:{color:'#64748b',fontSize:14,marginBottom:22,lineHeight:1.55}},
-          'Ask the world anything. See what everyone really thinks — live.'
-        ),
-        e('a',{href:'#/post',className:'btn-glow'},
-          '+ Ask the World'
-        )
-      )
-    )
-  );
+      <!-- Categories -->
+      <div class="mb-4">
+        <div class="flex items-center gap-2.5 mb-3.5">
+          <span class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Browse by Category</span>
+          <div class="flex-1 h-px" style="background:linear-gradient(90deg,#1e293b,transparent)"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          ${CATEGORIES.map(cat => html`
+            <${CategoryTile} key=${cat.id} cat=${cat} count=${catCounts[cat.id] || 0} />
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
 };
 
-// ── FeedPage ──────────────────────────────────────────────────
-export const FeedPage = () => {
+// ── FeedPage ──────────────────────────────────────────────────────
+export const FeedPage = ({ user }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initCat = searchParams.get('cat') || 'All';
+
   const [questions,    setQuestions]    = useState([]);
   const [voteCounts,   setVoteCounts]   = useState({});
   const [recentCounts, setRecentCounts] = useState({});
-  const [loading,      setLoading]      = useState(true);
+  const [activeCat,    setActiveCat]    = useState(initCat);
   const [sort,         setSort]         = useState('trending');
-  const [activeCat,    setActiveCat]    = useState('All');
-
-  // Read category from URL hash query param
-  useEffect(() => {
-    const hash = window.location.hash;
-    const catMatch = hash.match(/\?cat=([^&]+)/);
-    if (catMatch) setActiveCat(decodeURIComponent(catMatch[1]));
-  }, []);
+  const [loading,      setLoading]      = useState(true);
+  const [searchQuery,  setSearchQuery]  = useState('');
+  const [searchResults, setSearchResults] = useState(null); // null = not searching
+  const [searching,    setSearching]    = useState(false);
 
   useEffect(() => {
-    const since24h = new Date(Date.now()-24*60*60*1000).toISOString();
+    const since24h = new Date(Date.now() - 86400000).toISOString();
     Promise.all([
-      db.from('questions').select('*').order('created_at',{ascending:false}),
+      db.from('questions').select('*').order('created_at', { ascending: false }).limit(200),
       db.from('votes').select('question_id'),
-      db.from('votes').select('question_id').gte('created_at', since24h)
-    ]).then(([{data:qs},{data:vs},{data:recent}]) => {
-      setQuestions(qs||[]);
-      const counts  = (vs||[]).reduce((a,v)=>{ a[v.question_id]=(a[v.question_id]||0)+1; return a; },{});
-      const rcounts = (recent||[]).reduce((a,v)=>{ a[v.question_id]=(a[v.question_id]||0)+1; return a; },{});
-      setVoteCounts(counts);
-      setRecentCounts(rcounts);
+      db.from('votes').select('question_id').gte('created_at', since24h),
+    ]).then(([{ data: qs }, { data: vs }, { data: recent }]) => {
+      setQuestions(qs || []);
+      setVoteCounts((vs || []).reduce((a, v) => { a[v.question_id] = (a[v.question_id] || 0) + 1; return a; }, {}));
+      setRecentCounts((recent || []).reduce((a, v) => { a[v.question_id] = (a[v.question_id] || 0) + 1; return a; }, {}));
       setLoading(false);
     });
   }, []);
 
-  const filtered = activeCat==='All'
-    ? questions
-    : questions.filter(q=>(q.category||'General')===activeCat);
+  // ── Debounced search ───────────────────────────────────────────
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults(null); return; }
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      const { data } = await db.from('questions')
+        .select('*')
+        .textSearch('question_text', searchQuery.trim().split(' ').join(' & '), { config: 'english' })
+        .limit(50);
+      setSearchResults(data || []);
+      setSearching(false);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const sorted = [...filtered].sort((a,b) => {
-    if (sort==='trending') {
-      const ra=recentCounts[a.id]||0, rb=recentCounts[b.id]||0;
-      if (rb!==ra) return rb-ra;
-      return (voteCounts[b.id]||0)-(voteCounts[a.id]||0);
+  const baseList = searchResults !== null ? searchResults : questions;
+
+  const filtered = activeCat === 'All'
+    ? baseList
+    : baseList.filter(q => (q.category || 'General') === activeCat);
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === 'trending') {
+      const ra = recentCounts[a.id] || 0, rb = recentCounts[b.id] || 0;
+      if (rb !== ra) return rb - ra;
+      return (voteCounts[b.id] || 0) - (voteCounts[a.id] || 0);
     }
-    return 0;
+    return 0; // 'new' = already sorted by created_at desc from DB
   });
 
-  return div({ style:{minHeight:'100vh',background:'#020817',paddingTop:58}, className:'page-in' },
+  const setCat = (cat) => {
+    setActiveCat(cat);
+    if (cat !== 'All') setSearchParams({ cat });
+    else setSearchParams({});
+  };
 
-    // Sticky filter bar
-    div({ className:'feed-header' },
-      // Sort + count
-      div({ style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8} },
-        div({ style:{display:'flex',gap:4,background:'#0d1424',border:'1px solid #1a2540',borderRadius:999,padding:3} },
-          e(Pill,{label:'🔥 Trending',active:sort==='trending',onClick:()=>setSort('trending')}),
-          e(Pill,{label:'✨ New',     active:sort==='new',      onClick:()=>setSort('new')})
-        ),
-        !loading && span({style:{fontSize:12,color:'#334155',fontWeight:500}},
-          sorted.length+' question'+(sorted.length!==1?'s':'')
-        )
-      ),
-      // Category strip
-      div({ style:{display:'flex',gap:7,overflowX:'auto',scrollbarWidth:'none',WebkitOverflowScrolling:'touch'} },
-        e(Pill,{label:'🌐 All',active:activeCat==='All',onClick:()=>setActiveCat('All')}),
-        ...CATEGORIES.map(cat =>
-          e(Pill,{key:cat.id,label:cat.label,color:cat.color,
-            active:activeCat===cat.id,onClick:()=>setActiveCat(cat.id)})
-        )
-      )
-    ),
+  return html`
+    <div class="min-h-screen pb-[100px] pt-[58px] page-in" style="background:#020817">
 
-    // Feed
-    div({ style:{maxWidth:640,margin:'0 auto',padding:'16px 16px 80px'} },
-      loading
-        ? div({style:{display:'flex',flexDirection:'column',gap:10}},
-            ...[1,2,3].map(i=>div({key:i,className:'skeleton',style:{height:96}})))
-        : sorted.length === 0
-        ? div({style:{textAlign:'center',padding:'60px 0'},className:'fade-up'},
-            div({style:{fontSize:52,marginBottom:16}},'🌍'),
-            p({style:{color:'#94a3b8',fontSize:17,fontWeight:600,marginBottom:8}},
-              activeCat==='All'?'No questions yet':'No '+activeCat+' questions yet'),
-            p({style:{color:'#475569',fontSize:15}},'Be the first to post one!')
-          )
-        : div({style:{display:'flex',flexDirection:'column',gap:10},className:'fade-up'},
-            ...sorted.map(q=>e(QuestionCard,{key:q.id,question:q,
-              voteCount:voteCounts[q.id]||0,recentCount:recentCounts[q.id]||0}))
-          )
-    )
-  );
+      <!-- Sticky filter bar -->
+      <div class="sticky top-[58px] z-40 border-b border-border1 px-4 py-2.5"
+        style="background:rgba(2,8,23,0.92);backdrop-filter:blur(16px)">
+
+        <!-- Search -->
+        <${SearchBar} value=${searchQuery} onChange=${setSearchQuery} />
+
+        <!-- Sort + count -->
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex gap-1 bg-surface border border-border1 rounded-full p-0.5">
+            <${Pill} label="🔥 Trending" active=${sort === 'trending'} onClick=${() => setSort('trending')} />
+            <${Pill} label="✨ New"      active=${sort === 'new'}      onClick=${() => setSort('new')} />
+          </div>
+          ${!loading && html`
+            <span class="text-[12px] text-slate-600 font-medium">
+              ${sorted.length} question${sorted.length !== 1 ? 's' : ''}
+            </span>
+          `}
+        </div>
+
+        <!-- Category strip -->
+        <div class="flex gap-1.5 overflow-x-auto scroll-x pb-1">
+          <${Pill} label="🌐 All" active=${activeCat === 'All'} onClick=${() => setCat('All')} />
+          ${CATEGORIES.map(cat => html`
+            <${Pill} key=${cat.id} label=${cat.label} color=${cat.color}
+              active=${activeCat === cat.id} onClick=${() => setCat(cat.id)} />
+          `)}
+        </div>
+      </div>
+
+      <!-- Feed -->
+      <div class="max-w-[640px] mx-auto px-4 pt-4">
+        ${loading || searching
+          ? html`
+            <div class="flex flex-col gap-2.5">
+              ${[1, 2, 3].map(i => html`<div key=${i} class="skeleton h-24"></div>`)}
+            </div>
+          `
+          : sorted.length === 0
+          ? html`
+            <div class="text-center py-16 fade-up">
+              <div class="text-5xl mb-4">${searchQuery ? '🔍' : '🌍'}</div>
+              <p class="text-slate-400 text-[17px] font-semibold mb-2">
+                ${searchQuery ? 'No results for "' + searchQuery + '"' : activeCat === 'All' ? 'No questions yet' : 'No ' + activeCat + ' questions yet'}
+              </p>
+              <p class="text-slate-600 text-[15px]">
+                ${searchQuery ? 'Try a different search term' : 'Be the first to post one!'}
+              </p>
+            </div>
+          `
+          : html`
+            <div class="flex flex-col gap-2.5 fade-up">
+              ${sorted.map(q => html`
+                <${QuestionCard} key=${q.id} question=${q}
+                  voteCount=${voteCounts[q.id] || 0}
+                  recentCount=${recentCounts[q.id] || 0}
+                />
+              `)}
+            </div>
+          `
+        }
+      </div>
+    </div>
+  `;
 };
