@@ -9,19 +9,142 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #030712; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    @keyframes fillBar { from{width:0} to{width:var(--w)} }
-    .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#34d399; animation:pulse 1.5s infinite; }
-    .bar { animation: fillBar 0.8s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+    :root {
+      --bg:       #020817;
+      --surface:  #0d1424;
+      --border:   #1a2540;
+      --border2:  #243050;
+      --text:     #f1f5f9;
+      --muted:    #64748b;
+      --subtle:   #1e293b;
+      --indigo:   #6366f1;
+      --indigo2:  #4f46e5;
+      --green:    #10b981;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
     a { color: inherit; text-decoration: none; }
-    button { font-family: inherit; }
+    button { font-family: var(--font); cursor: pointer; }
+    input, textarea { font-family: var(--font); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── Animations ── */
+    @keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes shimmer  { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes grow     { from{width:0} to{width:var(--target)} }
+
+    .live-dot {
+      display: inline-block; width: 7px; height: 7px;
+      border-radius: 50%; background: var(--green);
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .fade-up { animation: fadeUp 0.4s ease forwards; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+    .card:hover {
+      border-color: var(--border2);
+      box-shadow: 0 4px 32px rgba(99,102,241,0.08);
+    }
+
+    .card-tap:active { transform: scale(0.985); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white; border: none;
+      border-radius: 14px; font-weight: 700;
+      font-size: 16px; padding: 15px;
+      width: 100%; transition: opacity 0.15s, transform 0.1s;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+      letter-spacing: 0.01em;
+    }
+    .btn-primary:hover  { opacity: 0.92; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { background: var(--subtle); box-shadow: none; opacity: 0.6; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--muted); border-radius: 14px;
+      font-size: 14px; font-weight: 600;
+      padding: 13px; width: 100%;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--indigo); color: var(--text); }
+
+    .input-field {
+      width: 100%; background: var(--subtle);
+      border: 1px solid var(--border2); color: var(--text);
+      border-radius: 12px; padding: 12px 14px;
+      font-size: 15px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-field:focus {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+    .input-field::placeholder { color: var(--muted); }
+
+    .vote-btn {
+      position: relative; overflow: hidden;
+      text-align: left; padding: 15px 18px;
+      border-radius: 16px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+      font-weight: 600; font-size: 15px; width: 100%;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+      display: block;
+    }
+    .vote-btn:not(:disabled):hover {
+      border-color: var(--indigo);
+      background: #111827;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(99,102,241,0.12);
+    }
+    .vote-btn:not(:disabled):active { transform: scale(0.98); }
+    .vote-btn:disabled { cursor: default; }
+    .vote-btn.voted-me {
+      border-color: var(--indigo) !important;
+      background: #1a1f3a !important;
+    }
+
+    .bar-fill { transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--subtle) 50%, var(--surface) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+      border-radius: 10px; height: 80px;
+    }
+
+    /* ── Glow blobs behind hero ── */
+    .glow-blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; z-index: 0;
+    }
+
+    /* ── Nav pill active ── */
+    .nav-link { transition: color 0.15s; }
+    .nav-link:hover { color: #a5b4fc; }
   </style>
 </head>
 <body>
   <div id="root"></div>
   <script>
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
     const { createClient } = supabase;
 
     const db = createClient(
@@ -29,23 +152,27 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54d3VibG1xYnlzcWJvYWR3cWF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDY1MzEsImV4cCI6MjA4OTA4MjUzMX0.mD24igp7ccd_y70Up3Pq-8pEBI7Y7lXjg160bvBLM8E'
     );
 
-    const COLORS = ['#818cf8','#34d399','#fbbf24','#f87171','#a78bfa','#38bdf8'];
+    const COLORS  = ['#818cf8','#34d399','#fbbf24','#f87171','#a78bfa','#38bdf8'];
+    const GLOWS   = ['rgba(129,140,248,0.12)','rgba(52,211,153,0.10)','rgba(251,191,36,0.10)','rgba(248,113,113,0.10)'];
 
-    const getFlag = (code) => {
+    const getFlag = code => {
       if (!code || code === 'XX') return '🌍';
       try { return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0))); }
       catch { return '🌍'; }
     };
 
     const e = React.createElement;
+    const div  = (p,...c) => e('div',p,...c);
+    const span = (p,...c) => e('span',p,...c);
+    const p    = (p,...c) => e('p',p,...c);
 
     // ── Router ────────────────────────────────────────────────
     const useRouter = () => {
       const parse = () => {
-        const hash = window.location.hash.replace('#','');
-        if (hash.startsWith('/q/')) return { page:'question', id: hash.slice(3) };
-        if (hash === '/post') return { page:'post', id: null };
-        return { page:'home', id: null };
+        const h = window.location.hash.replace('#','');
+        if (h.startsWith('/q/')) return { page:'question', id:h.slice(3) };
+        if (h === '/post') return { page:'post', id:null };
+        return { page:'home', id:null };
       };
       const [route, setRoute] = useState(parse);
       useEffect(() => {
@@ -58,12 +185,19 @@
 
     // ── NavBar ────────────────────────────────────────────────
     const NavBar = () =>
-      e('nav', { style:{position:'fixed',top:0,left:0,right:0,zIndex:50,background:'rgba(3,7,18,0.96)',borderBottom:'1px solid #1f2937'} },
-        e('div', { style:{maxWidth:640,margin:'0 auto',padding:'0 16px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between'} },
-          e('a', { href:'#/', style:{fontSize:20,fontWeight:900} },
-            e('span',{style:{color:'#818cf8'}},'con'),'sensus'
+      e('nav', { style:{position:'fixed',top:0,left:0,right:0,zIndex:100,
+        background:'rgba(2,8,23,0.85)',borderBottom:'1px solid rgba(26,37,64,0.8)',
+        backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'} },
+        div({ style:{maxWidth:640,margin:'0 auto',padding:'0 20px',height:58,
+          display:'flex',alignItems:'center',justifyContent:'space-between'} },
+          e('a', { href:'#/', style:{fontSize:21,fontWeight:900,letterSpacing:'-0.5px'} },
+            span({style:{color:'#818cf8'}},'con'),
+            span({style:{color:'#f1f5f9'}},'sensus')
           ),
-          e('a', { href:'#/post', style:{background:'#4f46e5',color:'white',padding:'8px 18px',borderRadius:999,fontSize:14,fontWeight:700} },
+          e('a', { href:'#/post',
+            style:{background:'linear-gradient(135deg,#6366f1,#4f46e5)',color:'white',
+              padding:'8px 18px',borderRadius:999,fontSize:13,fontWeight:700,
+              boxShadow:'0 2px 12px rgba(99,102,241,0.4)',letterSpacing:'0.01em'} },
             '+ Ask the world'
           )
         )
@@ -72,32 +206,54 @@
     // ── Home ──────────────────────────────────────────────────
     const Home = () => {
       const [questions, setQuestions] = useState([]);
-      const [loading, setLoading] = useState(true);
+      const [loading, setLoading]     = useState(true);
 
       useEffect(() => {
         db.from('questions').select('*').order('created_at',{ascending:false})
           .then(({data}) => { setQuestions(data||[]); setLoading(false); });
       }, []);
 
-      return e('div', { style:{maxWidth:640,margin:'0 auto',padding:'72px 16px 64px'} },
-        // Hero
-        e('div', { style:{textAlign:'center',padding:'32px 0 24px'} },
-          e('h1', { style:{fontSize:40,fontWeight:900,lineHeight:1.2,marginBottom:12,background:'linear-gradient(135deg,#818cf8,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'} },
-            'What does the world think?'
-          ),
-          e('p', { style:{color:'#9ca3af',fontSize:17} }, 'Vote. See the planet respond. Share the result.')
-        ),
-        e('div', { style:{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:24,color:'#6b7280',fontSize:13} },
-          e('span',{className:'live-dot'}), 'Results update in real time'
-        ),
-        loading
-          ? e('div',{style:{textAlign:'center',color:'#4b5563',padding:80,fontSize:17}},'Loading...')
-          : questions.length === 0
-          ? e('div',{style:{textAlign:'center',padding:80}},
-              e('div',{style:{fontSize:48,marginBottom:12}},'🌍'),
-              e('p',{style:{color:'#9ca3af',fontSize:17}},'No questions yet — post the first one!')
+      return div({ style:{maxWidth:640,margin:'0 auto',padding:'58px 16px 80px',position:'relative'} },
+
+        // Hero section
+        div({ style:{position:'relative',textAlign:'center',padding:'44px 0 36px',overflow:'hidden'} },
+          // Background glows
+          div({ style:{position:'absolute',top:'20%',left:'10%',width:260,height:260,
+            background:'rgba(99,102,241,0.12)',borderRadius:'50%',filter:'blur(70px)',pointerEvents:'none'} }),
+          div({ style:{position:'absolute',top:'10%',right:'5%',width:200,height:200,
+            background:'rgba(167,139,250,0.10)',borderRadius:'50%',filter:'blur(60px)',pointerEvents:'none'} }),
+
+          div({ style:{position:'relative',zIndex:1} },
+            e('h1', { style:{fontSize:42,fontWeight:900,lineHeight:1.15,marginBottom:14,
+              letterSpacing:'-1px',
+              background:'linear-gradient(135deg,#c7d2fe 0%,#818cf8 40%,#a78bfa 100%)',
+              WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'} },
+              'What does the', e('br',null), 'world think?'
+            ),
+            p({style:{color:'#94a3b8',fontSize:17,lineHeight:1.5,marginBottom:20}},
+              'Vote on anything. See live results from around the planet.'
+            ),
+            div({style:{display:'inline-flex',alignItems:'center',gap:8,
+              background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)',
+              borderRadius:999,padding:'6px 14px',fontSize:13,color:'#6ee7b7'}},
+              e('span',{className:'live-dot'}),
+              'Live results · updating now'
             )
-          : e('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+          )
+        ),
+
+        // Feed
+        loading
+          ? div({style:{display:'flex',flexDirection:'column',gap:10,marginTop:8}},
+              ...[1,2,3].map(i => div({key:i,className:'skeleton',style:{height:88}}))
+            )
+          : questions.length === 0
+          ? div({style:{textAlign:'center',padding:'60px 0'},className:'fade-up'},
+              div({style:{fontSize:52,marginBottom:16}}, '🌍'),
+              p({style:{color:'#94a3b8',fontSize:18,fontWeight:600,marginBottom:8}},'No questions yet'),
+              p({style:{color:'#475569',fontSize:15}},'Be the first to ask the world something.')
+            )
+          : div({style:{display:'flex',flexDirection:'column',gap:10},className:'fade-up'},
               ...questions.map(q => e(QuestionCard,{key:q.id,question:q}))
             )
       );
@@ -106,17 +262,31 @@
     // ── QuestionCard ──────────────────────────────────────────
     const QuestionCard = ({question}) => {
       const voted = localStorage.getItem('voted_'+question.id) !== null;
-      return e('a', { href:'#/q/'+question.id,
-        style:{display:'block',background:'#0f172a',border:'1px solid #1e293b',borderRadius:16,padding:'18px 20px',transition:'border-color 0.2s'}},
-        e('p',{style:{fontSize:16,fontWeight:600,marginBottom:10,lineHeight:1.4}}, question.question_text),
-        e('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}},
-          e('div',{style:{display:'flex',gap:6,flexWrap:'wrap'}},
+      return e('a', { href:'#/q/'+question.id, className:'card card-tap',
+        style:{display:'block',padding:'18px 20px'} },
+        p({style:{fontSize:16,fontWeight:600,lineHeight:1.45,marginBottom:12,color:'#f1f5f9'}},
+          question.question_text
+        ),
+        div({style:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10}},
+          div({style:{display:'flex',gap:5,flexWrap:'wrap',flex:1,minWidth:0}},
             ...question.options.slice(0,3).map((opt,i) =>
-              e('span',{key:i,style:{fontSize:11,padding:'2px 9px',borderRadius:999,border:'1px solid '+COLORS[i%COLORS.length]+'55',color:COLORS[i%COLORS.length],background:COLORS[i%COLORS.length]+'15'}}, opt)
+              span({key:i, style:{fontSize:11,padding:'3px 9px',borderRadius:999,whiteSpace:'nowrap',
+                border:'1px solid '+COLORS[i%COLORS.length]+'40',
+                color:COLORS[i%COLORS.length],
+                background:COLORS[i%COLORS.length]+'18',
+                fontWeight:500}}, opt)
             ),
-            question.options.length > 3 && e('span',{style:{fontSize:11,color:'#4b5563'}},'+'+( question.options.length-3)+' more')
+            question.options.length > 3 &&
+              span({style:{fontSize:11,color:'#475569',padding:'3px 0',alignSelf:'center'}},
+                '+'+(question.options.length-3)+' more')
           ),
-          e('span',{style:{fontSize:13,flexShrink:0,color:voted?'#34d399':'#6366f1',fontWeight:600}}, voted?'✓ Voted':'Vote →')
+          span({style:{fontSize:13,flexShrink:0,fontWeight:700,
+            color:voted?'#10b981':'#818cf8',
+            background:voted?'rgba(16,185,129,0.1)':'rgba(99,102,241,0.1)',
+            padding:'4px 10px',borderRadius:999,
+            border:'1px solid '+(voted?'rgba(16,185,129,0.25)':'rgba(99,102,241,0.25)')}},
+            voted ? '✓ Voted' : 'Vote →'
+          )
         )
       );
     };
@@ -124,64 +294,117 @@
     // ── PostPage ──────────────────────────────────────────────
     const PostPage = () => {
       const [question, setQuestion] = useState('');
-      const [options, setOptions] = useState(['','']);
-      const [posting, setPosting] = useState(false);
+      const [options,  setOptions]  = useState(['','']);
+      const [posting,  setPosting]  = useState(false);
 
       const post = async () => {
         const valid = options.filter(o=>o.trim()!=='');
-        if (!question.trim() || valid.length < 2) { alert('Need a question + at least 2 options.'); return; }
+        if (!question.trim() || valid.length < 2) {
+          alert('Add a question and at least 2 options.'); return;
+        }
         setPosting(true);
-        const {data,error} = await db.from('questions').insert({question_text:question.trim(),options:valid}).select().single();
+        const {data,error} = await db.from('questions')
+          .insert({question_text:question.trim(), options:valid})
+          .select().single();
         setPosting(false);
         if (error) { alert('Error: '+error.message); return; }
         window.location.hash = '/q/'+data.id;
       };
 
-      const inp = {width:'100%',background:'#1e293b',border:'1px solid #334155',color:'white',borderRadius:10,padding:'11px 13px',fontSize:15,outline:'none'};
+      return div({style:{maxWidth:640,margin:'0 auto',padding:'74px 16px 80px'},className:'fade-up'},
 
-      return e('div',{style:{maxWidth:640,margin:'0 auto',padding:'72px 16px 64px'}},
-        e('h2',{style:{fontSize:26,fontWeight:900,marginBottom:6}},'Ask the world'),
-        e('p',{style:{color:'#6b7280',marginBottom:24,fontSize:15}},'Post a question and watch the votes roll in live.'),
-        e('div',{style:{background:'#0f172a',border:'1px solid #1e293b',borderRadius:16,padding:24}},
-          e('textarea',{placeholder:'e.g. Is a hotdog a sandwich?',value:question,onChange:ev=>setQuestion(ev.target.value),
-            style:{...inp,height:100,resize:'none',marginBottom:14,fontSize:16}}),
-          e('div',{style:{display:'flex',flexDirection:'column',gap:8,marginBottom:14}},
-            ...options.map((opt,i)=>
-              e('div',{key:i,style:{display:'flex',alignItems:'center',gap:8}},
-                e('div',{style:{width:26,height:26,borderRadius:'50%',background:COLORS[i%COLORS.length]+'25',color:COLORS[i%COLORS.length],display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,flexShrink:0}},i+1),
-                e('input',{type:'text',placeholder:'Option '+(i+1)+(i<2?' (required)':''),value:opt,
-                  onChange:ev=>{const n=[...options];n[i]=ev.target.value;setOptions(n);},style:{...inp,flex:1}}),
-                options.length>2 && e('button',{onClick:()=>setOptions(options.filter((_,j)=>j!==i)),
-                  style:{background:'none',border:'none',color:'#475569',cursor:'pointer',fontSize:20,padding:'0 4px',lineHeight:1}},'×')
+        div({style:{marginBottom:28}},
+          e('h2',{style:{fontSize:28,fontWeight:900,letterSpacing:'-0.5px',marginBottom:6}},
+            'Ask the world'
+          ),
+          p({style:{color:'#64748b',fontSize:15,lineHeight:1.5}},
+            'Post your question and watch the votes come in from around the globe.'
+          )
+        ),
+
+        div({className:'card',style:{padding:24}},
+
+          // Question input
+          div({style:{marginBottom:18}},
+            div({style:{fontSize:12,fontWeight:700,color:'#64748b',textTransform:'uppercase',
+              letterSpacing:'0.08em',marginBottom:8}},'Your question'),
+            e('textarea', {
+              className:'input-field',
+              placeholder:'e.g. Is a hotdog a sandwich? · Who is the GOAT? · Pineapple on pizza?',
+              value:question, onChange:ev=>setQuestion(ev.target.value),
+              style:{height:100,resize:'none',fontSize:16,lineHeight:1.5}
+            })
+          ),
+
+          // Options
+          div({style:{marginBottom:18}},
+            div({style:{fontSize:12,fontWeight:700,color:'#64748b',textTransform:'uppercase',
+              letterSpacing:'0.08em',marginBottom:10}},'Options (2–4)'),
+            div({style:{display:'flex',flexDirection:'column',gap:8}},
+              ...options.map((opt,i) =>
+                div({key:i, style:{display:'flex',alignItems:'center',gap:8}},
+                  div({style:{width:28,height:28,borderRadius:'50%',flexShrink:0,
+                    background:COLORS[i%COLORS.length]+'20',color:COLORS[i%COLORS.length],
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    fontSize:12,fontWeight:800}}, i+1),
+                  e('input',{
+                    type:'text', className:'input-field',
+                    placeholder:'Option '+(i+1)+(i<2?' (required)':'  (optional)'),
+                    value:opt,
+                    onChange:ev=>{ const n=[...options]; n[i]=ev.target.value; setOptions(n); },
+                    style:{flex:1}
+                  }),
+                  options.length>2 && e('button',{
+                    onClick:()=>setOptions(options.filter((_,j)=>j!==i)),
+                    style:{background:'none',border:'none',color:'#475569',fontSize:20,
+                      padding:'0 2px',lineHeight:1,flexShrink:0,
+                      transition:'color 0.15s'}
+                  },'×')
+                )
               )
             )
           ),
-          options.length<4 && e('button',{onClick:()=>setOptions([...options,'']),
-            style:{background:'none',border:'none',color:'#818cf8',cursor:'pointer',fontSize:14,padding:'0 0 14px',display:'block'}},
-            '+ Add another option'),
-          e('button',{onClick:post,disabled:posting,
-            style:{width:'100%',padding:15,borderRadius:12,border:'none',background:posting?'#1e293b':'#4f46e5',color:'white',fontWeight:700,fontSize:16,cursor:posting?'not-allowed':'pointer'}},
-            posting?'Posting...':'🌍 Post to the World')
+
+          options.length < 4 && e('button',{
+            onClick:()=>setOptions([...options,'']),
+            style:{background:'none',border:'none',color:'#6366f1',fontSize:13,
+              fontWeight:600,padding:'0 0 18px',display:'block',cursor:'pointer'}
+          },'+ Add another option'),
+
+          e('button',{
+            className:'btn-primary', onClick:post, disabled:posting
+          }, posting ? '⏳ Posting...' : '🌍  Post to the World')
         )
       );
     };
 
-    // ── ResultBars — custom chart, no library needed ──────────
+    // ── ResultBars ────────────────────────────────────────────
     const ResultBars = ({options, votes}) => {
       const total = votes.length;
-      return e('div',{style:{display:'flex',flexDirection:'column',gap:14}},
-        ...options.map((opt,i)=>{
+      return div({style:{display:'flex',flexDirection:'column',gap:16}},
+        ...options.map((opt,i) => {
           const count = votes.filter(v=>v.option_index===i).length;
-          const pct = total>0 ? Math.round((count/total)*100) : 0;
-          return e('div',{key:i},
-            e('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:14}},
-              e('span',{style:{fontWeight:600,color:COLORS[i%COLORS.length]}},'Option '+(i+1)+': '+opt),
-              e('span',{style:{fontWeight:800,color:COLORS[i%COLORS.length]}},(total>0?pct+'%':'—'))
+          const pct   = total>0 ? Math.round((count/total)*100) : 0;
+          return div({key:i},
+            div({style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:7}},
+              span({style:{fontSize:14,fontWeight:600,color:'#e2e8f0',lineHeight:1.4,flex:1,paddingRight:12}}, opt),
+              span({style:{fontSize:18,fontWeight:900,color:COLORS[i%COLORS.length],flexShrink:0}},
+                total>0 ? pct+'%' : '—'
+              )
             ),
-            e('div',{style:{background:'#1e293b',borderRadius:999,height:10,overflow:'hidden'}},
-              e('div',{style:{height:'100%',borderRadius:999,background:COLORS[i%COLORS.length],width:pct+'%',transition:'width 0.9s cubic-bezier(0.4,0,0.2,1)'}})
+            div({style:{background:'#1e293b',borderRadius:999,height:9,overflow:'hidden',marginBottom:5}},
+              div({className:'bar-fill',
+                style:{height:'100%',borderRadius:999,
+                  background:'linear-gradient(90deg,'+COLORS[i%COLORS.length]+','+COLORS[i%COLORS.length]+'99)',
+                  width:pct+'%',
+                  boxShadow:'0 0 8px '+COLORS[i%COLORS.length]+'60'}
+              })
             ),
-            e('div',{style:{fontSize:12,color:'#475569',marginTop:4}},count+' vote'+(count!==1?'s':''))
+            span({style:{fontSize:12,color:'#475569'}},
+              count+' vote'+(count!==1?'s':'')+
+              (total>0 && count===Math.max(...options.map((_,j)=>votes.filter(v=>v.option_index===j).length))
+                && count>0 ? '  🏆' : '')
+            )
           );
         })
       );
@@ -190,142 +413,333 @@
     // ── QuestionPage ──────────────────────────────────────────
     const QuestionPage = ({id}) => {
       const [question, setQuestion] = useState(null);
-      const [votes, setVotes] = useState([]);
-      const [myVote, setMyVote] = useState(null);
-      const [country, setCountry] = useState('XX');
-      const [voting, setVoting] = useState(false);
-      const [msg, setMsg] = useState('');
+      const [votes,    setVotes]    = useState([]);
+      const [myVote,   setMyVote]   = useState(null);
+      const [country,  setCountry]  = useState('XX');
+      const [voting,   setVoting]   = useState(false);
+      const [msg,      setMsg]      = useState('');
+      const [newVote,  setNewVote]  = useState(false);
 
       useEffect(()=>{
-        const s=localStorage.getItem('voted_'+id);
-        if(s!==null) setMyVote(parseInt(s,10));
+        const s = localStorage.getItem('voted_'+id);
+        if (s!==null) setMyVote(parseInt(s,10));
       },[id]);
 
       useEffect(()=>{
-        fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>setCountry(d.country_code||'XX')).catch(()=>{});
+        fetch('https://ipapi.co/json/').then(r=>r.json())
+          .then(d=>setCountry(d.country_code||'XX')).catch(()=>{});
       },[]);
 
       useEffect(()=>{
         if(!id) return;
         db.from('questions').select('*').eq('id',id).single().then(({data})=>setQuestion(data));
-        const load = async()=>{ const {data}=await db.from('votes').select('*').eq('question_id',id); setVotes(data||[]); };
+        const load = async()=>{
+          const {data} = await db.from('votes').select('*').eq('question_id',id);
+          setVotes(data||[]);
+        };
         load();
         const ch = db.channel('votes:'+id)
-          .on('postgres_changes',{event:'INSERT',schema:'public',table:'votes',filter:'question_id=eq.'+id},load)
+          .on('postgres_changes',{event:'INSERT',schema:'public',table:'votes',filter:'question_id=eq.'+id},
+            ()=>{ load(); setNewVote(true); setTimeout(()=>setNewVote(false),1200); })
           .subscribe();
         return ()=>db.removeChannel(ch);
       },[id]);
 
-      const castVote = async(index)=>{
-        if(myVote!==null||voting) return;
+      const castVote = async index=>{
+        if (myVote!==null||voting) return;
         setVoting(true);
-        const {error}=await db.from('votes').insert({question_id:id,option_index:index,country_code:country});
+        const {error} = await db.from('votes')
+          .insert({question_id:id, option_index:index, country_code:country});
         setVoting(false);
-        if(error){alert('Vote failed: '+error.message);return;}
+        if (error) { alert('Vote failed: '+error.message); return; }
         setMyVote(index);
-        localStorage.setItem('voted_'+id,String(index));
+        localStorage.setItem('voted_'+id, String(index));
       };
 
       const copyLink = ()=>{
         navigator.clipboard.writeText(window.location.href)
-          .then(()=>{setMsg('✓ Link copied!');setTimeout(()=>setMsg(''),2000);})
-          .catch(()=>setMsg('Copy the URL manually.'));
+          .then(()=>{ setMsg('✓ Link copied — send it to settle the argument!'); setTimeout(()=>setMsg(''),3000); })
+          .catch(()=>setMsg('Copy the URL from your browser bar.'));
       };
 
-      if(!question) return e('div',{style:{paddingTop:120,textAlign:'center',color:'#4b5563',fontSize:17}},'Loading...');
+      // ── Pure Canvas share card — zero dependencies ────────
+      function roundRect(ctx,x,y,w,h,r){
+        ctx.beginPath();
+        ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+        ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+        ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+        ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+        ctx.closePath();
+      }
+      function wrapText(ctx,text,x,y,maxW,lineH){
+        const words=text.split(' '); let line='';
+        for(let i=0;i<words.length;i++){
+          const test=line+words[i]+' ';
+          if(ctx.measureText(test).width>maxW&&i>0){ctx.fillText(line,x,y);line=words[i]+' ';y+=lineH;}
+          else{line=test;}
+        }
+        ctx.fillText(line,x,y);
+      }
 
-      const total = votes.length;
-      const countryStats = votes.reduce((acc,v)=>{const c=v.country_code||'XX';acc[c]=(acc[c]||0)+1;return acc;},{});
-      const topCountries = Object.entries(countryStats).sort((a,b)=>b[1]-a[1]).slice(0,6);
-      const hasVoted = myVote!==null;
+      const generateShareCard = ()=>{
+        if(total===0){setMsg('Cast a vote first to generate the card!');setTimeout(()=>setMsg(''),3000);return;}
+        const W=640,H=400;
+        const canvas=document.createElement('canvas');
+        canvas.width=W*2; canvas.height=H*2;
+        const ctx=canvas.getContext('2d');
+        ctx.scale(2,2);
 
-      return e('div',{style:{maxWidth:640,margin:'0 auto',padding:'64px 16px 64px'}},
-        e('a',{href:'#/',style:{color:'#818cf8',fontSize:14,display:'inline-block',margin:'16px 0 20px'}},'← All Questions'),
-        e('h1',{style:{fontSize:26,fontWeight:900,lineHeight:1.35,marginBottom:28}},question.question_text),
+        // Background
+        ctx.fillStyle='#020817'; ctx.fillRect(0,0,W,H);
+
+        // Glow blobs
+        const blob=(x,y,r,col)=>{const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();};
+        blob(80,80,180,'rgba(99,102,241,0.2)');
+        blob(560,340,150,'rgba(167,139,250,0.15)');
+
+        // Card surface
+        ctx.fillStyle='#0d1424'; roundRect(ctx,24,24,W-48,H-48,20); ctx.fill();
+        ctx.strokeStyle='#1a2540'; ctx.lineWidth=1; roundRect(ctx,24,24,W-48,H-48,20); ctx.stroke();
+
+        // Branding
+        ctx.font='700 15px sans-serif';
+        ctx.fillStyle='#818cf8'; ctx.fillText('con',44,60);
+        const conW=ctx.measureText('con').width;
+        ctx.fillStyle='#94a3b8'; ctx.fillText('sensus',44+conW,60);
+
+        // Live dot
+        ctx.beginPath(); ctx.arc(W-44,53,5,0,Math.PI*2); ctx.fillStyle='#10b981'; ctx.fill();
+        ctx.font='600 12px sans-serif'; ctx.fillStyle='#6ee7b7'; ctx.textAlign='right';
+        ctx.fillText('LIVE · '+total+' vote'+(total!==1?'s':''),W-56,58);
+        ctx.textAlign='left';
+
+        // Question
+        ctx.font='700 18px sans-serif'; ctx.fillStyle='#f1f5f9';
+        wrapText(ctx,question.question_text,44,96,W-88,26);
+
+        // Bars
+        const COLS=['#818cf8','#34d399','#fbbf24','#f87171','#a78bfa','#38bdf8'];
+        const barTop=question.options.length>3?148:158;
+        const barGap=question.options.length>3?42:48;
+        const barW=W-88, barH=10;
+
+        question.options.forEach((opt,i)=>{
+          const count=votes.filter(v=>v.option_index===i).length;
+          const pct=total>0?Math.round((count/total)*100):0;
+          const y=barTop+i*barGap;
+          const col=COLS[i%COLS.length];
+          // Label
+          ctx.font='600 13px sans-serif'; ctx.fillStyle=col;
+          ctx.fillText(opt.length>34?opt.slice(0,33)+'…':opt,44,y);
+          // Pct
+          ctx.font='800 13px sans-serif'; ctx.textAlign='right'; ctx.fillStyle=col;
+          ctx.fillText(pct+'%',W-44,y); ctx.textAlign='left';
+          // Track
+          ctx.fillStyle='#1e293b'; roundRect(ctx,44,y+7,barW,barH,5); ctx.fill();
+          // Fill
+          if(pct>0){
+            const grad=ctx.createLinearGradient(44,0,44+barW*(pct/100),0);
+            grad.addColorStop(0,col); grad.addColorStop(1,col+'88');
+            ctx.fillStyle=grad; roundRect(ctx,44,y+7,barW*(pct/100),barH,5); ctx.fill();
+            // Glow
+            ctx.shadowColor=col; ctx.shadowBlur=8;
+            roundRect(ctx,44,y+7,barW*(pct/100),barH,5); ctx.fill();
+            ctx.shadowBlur=0;
+          }
+        });
+
+        // Footer
+        const fy=H-48;
+        ctx.strokeStyle='#1a2540'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(44,fy); ctx.lineTo(W-44,fy); ctx.stroke();
+        ctx.font='500 11px sans-serif'; ctx.fillStyle='#334155';
+        ctx.fillText(new Date().toLocaleDateString(),44,fy+17);
+        ctx.textAlign='right';
+        ctx.fillText('kynaruniverse.github.io/consensus',W-44,fy+17);
+        ctx.textAlign='left';
+
+        // Download
+        const a=document.createElement('a');
+        a.download='consensus-'+id.slice(0,8)+'.png';
+        a.href=canvas.toDataURL('image/png');
+        a.click();
+        setMsg('✓ Image saved — post it everywhere!');
+        setTimeout(()=>setMsg(''),3000);
+      };
+
+      if (!question) return div({style:{paddingTop:130,textAlign:'center'}},
+        div({style:{color:'#334155',fontSize:32,marginBottom:12}},'●'),
+        p({style:{color:'#475569',fontSize:16}},'Loading...')
+      );
+
+      const total         = votes.length;
+      const hasVoted      = myVote!==null;
+      const countryStats  = votes.reduce((acc,v)=>{ const c=v.country_code||'XX'; acc[c]=(acc[c]||0)+1; return acc; },{});
+      const topCountries  = Object.entries(countryStats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      const winnerIdx     = hasVoted && total>0
+        ? question.options.reduce((best,_,i) =>
+            votes.filter(v=>v.option_index===i).length > votes.filter(v=>v.option_index===best).length ? i : best
+          , 0)
+        : null;
+
+      return div({style:{maxWidth:640,margin:'0 auto',padding:'58px 16px 80px'},className:'fade-up'},
+
+        // Back link
+        e('a',{href:'#/',style:{display:'inline-flex',alignItems:'center',gap:6,
+          color:'#64748b',fontSize:13,fontWeight:500,padding:'16px 0 24px',
+          transition:'color 0.15s'},
+          onMouseOver:ev=>ev.currentTarget.style.color='#818cf8',
+          onMouseOut:ev=>ev.currentTarget.style.color='#64748b'},
+          '← All questions'
+        ),
+
+        // Question title
+        e('h1',{style:{fontSize:26,fontWeight:900,lineHeight:1.4,marginBottom:8,
+          letterSpacing:'-0.3px',color:'#f1f5f9'}},
+          question.question_text
+        ),
+
+        // Vote count badge
+        div({style:{display:'flex',alignItems:'center',gap:10,marginBottom:28}},
+          div({style:{display:'flex',alignItems:'center',gap:6,
+            background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)',
+            borderRadius:999,padding:'4px 12px',fontSize:12,color:'#6ee7b7',
+            transition:'all 0.3s',
+            boxShadow:newVote?'0 0 12px rgba(16,185,129,0.3)':'none'}},
+            e('span',{className:'live-dot'}),
+            span(null, total + (total===1?' vote':' votes') + ' · live')
+          ),
+          !hasVoted && div({style:{fontSize:12,color:'#475569'}},'Cast your vote below')
+        ),
 
         // Vote buttons
-        e('div',{style:{display:'flex',flexDirection:'column',gap:10,marginBottom:32}},
+        div({style:{display:'flex',flexDirection:'column',gap:10,marginBottom:32}},
           ...question.options.map((opt,i)=>{
-            const count=votes.filter(v=>v.option_index===i).length;
-            const pct=total>0?Math.round((count/total)*100):0;
-            const isMe=myVote===i;
-            return e('button',{key:i,onClick:()=>castVote(i),disabled:hasVoted||voting,
-              style:{position:'relative',overflow:'hidden',textAlign:'left',padding:'14px 16px',borderRadius:14,
-                border:'1px solid '+(isMe?'#6366f1':'#1e293b'),background:isMe?'#1e1b4b':'#0f172a',
-                color:'white',fontWeight:600,fontSize:15,cursor:hasVoted?'default':'pointer',width:'100%'}},
-              hasVoted && e('div',{style:{position:'absolute',left:0,top:0,height:'100%',background:COLORS[i%COLORS.length],opacity:0.18,width:pct+'%',transition:'width 0.8s ease'}}),
-              e('div',{style:{position:'relative',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-                e('span',{style:{display:'flex',alignItems:'center',gap:8}},
-                  isMe && e('span',{style:{color:'#818cf8'}},'✓ '), opt
+            const count  = votes.filter(v=>v.option_index===i).length;
+            const pct    = total>0 ? Math.round((count/total)*100) : 0;
+            const isMe   = myVote===i;
+            const isWin  = winnerIdx===i && total>0;
+            return e('button',{
+              key:i, onClick:()=>castVote(i),
+              disabled:hasVoted||voting,
+              className:'vote-btn'+(isMe?' voted-me':''),
+              style:{border:'1px solid '+(isMe?'#6366f1':'#1a2540')}
+            },
+              // Progress fill
+              hasVoted && div({style:{
+                position:'absolute',left:0,top:0,height:'100%',
+                borderRadius:16,
+                background:'linear-gradient(90deg,'+COLORS[i%COLORS.length]+'30,'+COLORS[i%COLORS.length]+'10)',
+                width:pct+'%',transition:'width 1s cubic-bezier(0.4,0,0.2,1)'
+              }}),
+              div({style:{position:'relative',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}},
+                span({style:{display:'flex',alignItems:'center',gap:9,flex:1}},
+                  // Color dot
+                  span({style:{width:10,height:10,borderRadius:'50%',flexShrink:0,
+                    background:COLORS[i%COLORS.length],
+                    boxShadow:'0 0 6px '+COLORS[i%COLORS.length]+(isMe?'':'60')}}),
+                  span({style:{fontWeight:isMe?700:600, color:isMe?'#e0e7ff':'#e2e8f0'}}, opt),
+                  isMe && span({style:{fontSize:12,color:'#818cf8',fontWeight:700}},'✓ Your vote'),
+                  isWin && span({style:{fontSize:14}},'🏆')
                 ),
-                hasVoted && e('span',{style:{fontWeight:800,fontSize:15,color:COLORS[i%COLORS.length]}},pct+'%')
+                hasVoted && span({style:{fontSize:17,fontWeight:900,flexShrink:0,
+                  color:COLORS[i%COLORS.length],minWidth:44,textAlign:'right'}},
+                  pct+'%'
+                )
               )
             );
           })
         ),
 
         // Results card
-        e('div',{id:'results-card',style:{background:'#0f172a',border:'1px solid #1e293b',borderRadius:20,padding:24,marginBottom:12}},
-          e('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}},
-            e('div',null,
-              e('h2',{style:{fontSize:18,fontWeight:900}},'Live Results'),
-              e('p',{style:{color:'#6b7280',fontSize:13,marginTop:4,lineHeight:1.4}},question.question_text)
+        div({className:'card',style:{padding:24,marginBottom:12}},
+
+          // Header
+          div({style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:22}},
+            div(null,
+              e('h2',{style:{fontSize:17,fontWeight:800,color:'#f1f5f9',marginBottom:3}},'Live Results'),
+              p({style:{color:'#475569',fontSize:13,lineHeight:1.4,maxWidth:320}}, question.question_text)
             ),
-            e('div',{style:{textAlign:'right',flexShrink:0,marginLeft:12}},
-              e('div',{style:{display:'flex',alignItems:'center',gap:6,justifyContent:'flex-end',marginBottom:2}},
+            div({style:{textAlign:'right',flexShrink:0,marginLeft:12}},
+              div({style:{display:'flex',alignItems:'center',gap:5,justifyContent:'flex-end',marginBottom:4}},
                 e('span',{className:'live-dot'}),
-                e('span',{style:{fontSize:12,color:'#6b7280'}},'LIVE')
+                span({style:{fontSize:11,color:'#64748b',fontWeight:600,letterSpacing:'0.06em'}},'LIVE')
               ),
-              e('div',{style:{fontSize:26,fontWeight:900}},total),
-              e('div',{style:{fontSize:11,color:'#475569'}},'votes')
+              div({style:{fontSize:30,fontWeight:900,color:'#f1f5f9',lineHeight:1}},total),
+              div({style:{fontSize:11,color:'#475569',marginTop:2}},'total votes')
             )
           ),
 
           total===0
-            ? e('div',{style:{textAlign:'center',color:'#4b5563',padding:'40px 0'}},
-                e('div',{style:{fontSize:36,marginBottom:8}},'🗳️'),
-                e('p',null,'No votes yet — be the first!')
+            ? div({style:{textAlign:'center',padding:'36px 0',color:'#334155'}},
+                div({style:{fontSize:40,marginBottom:10}},'🗳️'),
+                p({style:{fontSize:15,color:'#475569'}},'No votes yet — be the first!')
               )
-            : e('div',null,
+            : div(null,
                 e(ResultBars,{options:question.options,votes}),
-                topCountries.length>0 && e('div',{style:{marginTop:24,paddingTop:20,borderTop:'1px solid #1e293b'}},
-                  e('p',{style:{fontSize:11,fontWeight:700,color:'#475569',textTransform:'uppercase',letterSpacing:2,marginBottom:14}},'By Country'),
-                  e('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+
+                // Country breakdown
+                topCountries.length>0 && div({style:{marginTop:24,paddingTop:20,
+                  borderTop:'1px solid #1a2540'}},
+                  p({style:{fontSize:11,fontWeight:700,color:'#475569',
+                    textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:14}},
+                    '🌍  By Country'
+                  ),
+                  div({style:{display:'flex',flexDirection:'column',gap:11}},
                     ...topCountries.map(([code,count])=>{
-                      const pct=Math.round((count/total)*100);
-                      return e('div',{key:code,style:{display:'flex',alignItems:'center',gap:10}},
-                        e('span',{style:{fontSize:18,width:26,textAlign:'center',flexShrink:0}},getFlag(code)),
-                        e('div',{style:{flex:1,background:'#1e293b',borderRadius:999,overflow:'hidden',height:7}},
-                          e('div',{style:{height:'100%',background:'#6366f1',width:pct+'%',transition:'width 0.8s ease',borderRadius:999}})
+                      const pct = Math.round((count/total)*100);
+                      return div({key:code,style:{display:'flex',alignItems:'center',gap:10}},
+                        span({style:{fontSize:17,width:24,textAlign:'center',flexShrink:0}},getFlag(code)),
+                        div({style:{flex:1,background:'#1e293b',borderRadius:999,overflow:'hidden',height:6}},
+                          div({className:'bar-fill',style:{height:'100%',borderRadius:999,
+                            background:'linear-gradient(90deg,#6366f1,#818cf8)',
+                            width:pct+'%',
+                            boxShadow:'0 0 6px rgba(99,102,241,0.4)'}})
                         ),
-                        e('span',{style:{fontSize:12,color:'#9ca3af',width:60,textAlign:'right',flexShrink:0}},code+' · '+pct+'%')
+                        span({style:{fontSize:12,color:'#64748b',width:58,
+                          textAlign:'right',flexShrink:0,fontWeight:500}},
+                          code+' · '+pct+'%'
+                        )
                       );
                     })
                   )
                 )
               ),
 
-          e('div',{style:{marginTop:20,paddingTop:16,borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-            e('span',{style:{fontSize:12,fontWeight:900,color:'#818cf8'}},'consensus'),
-            e('span',{style:{fontSize:12,color:'#334155'}},new Date().toLocaleDateString())
+          // Footer
+          div({style:{marginTop:22,paddingTop:16,borderTop:'1px solid #1a2540',
+            display:'flex',justifyContent:'space-between',alignItems:'center'}},
+            span({style:{fontSize:13,fontWeight:900,letterSpacing:'-0.3px'}},
+              span({style:{color:'#818cf8'}},'con'),
+              span({style:{color:'#94a3b8'}},'sensus')
+            ),
+            span({style:{fontSize:11,color:'#334155'}},new Date().toLocaleDateString())
           )
         ),
 
-        // Share
-        e('div',{style:{display:'flex',flexDirection:'column',gap:10}},
-          e('button',{onClick:copyLink,
-            style:{width:'100%',padding:14,borderRadius:14,border:'1px solid #1e293b',background:'transparent',color:'#9ca3af',fontWeight:600,fontSize:15,cursor:'pointer'}},
-            '🔗 Copy Link to Share'
+        // Share buttons
+        div({style:{display:'flex',flexDirection:'column',gap:10}},
+          e('button',{
+            onClick:generateShareCard,
+            style:{width:'100%',padding:'15px',borderRadius:14,border:'none',
+              background:'linear-gradient(135deg,#059669,#047857)',
+              color:'white',fontWeight:700,fontSize:15,cursor:'pointer',
+              boxShadow:'0 4px 20px rgba(5,150,105,0.35)',
+              letterSpacing:'0.01em'}},
+            '📸  Save shareable image card'
           ),
-          msg && e('p',{style:{textAlign:'center',fontSize:13,color:'#34d399',margin:0}},msg)
-        )
+          e('button',{className:'btn-ghost',onClick:copyLink},'🔗  Copy link to share')
+        ),
+
+        msg && div({style:{textAlign:'center',fontSize:13,color:'#34d399',
+          padding:'10px 0',fontWeight:500}}, msg)
       );
     };
 
     // ── App ───────────────────────────────────────────────────
     const App = () => {
       const route = useRouter();
-      return e('div',{style:{minHeight:'100vh'}},
+      return div({style:{minHeight:'100vh',background:'#020817'}},
         e(NavBar,null),
         route.page==='home'     && e(Home,null),
         route.page==='post'     && e(PostPage,null),
