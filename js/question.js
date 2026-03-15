@@ -230,7 +230,7 @@ export const QuestionPage = ({ id, user }) => {
       const opts    = data.options.join(' vs ');
       const rawDesc = data.question_text + ' — ' + opts + '. Vote now and see live results from around the world.';
       const desc    = rawDesc.length > 160 ? rawDesc.slice(0,157)+'...' : rawDesc;
-      const pageUrl = 'https://kynaruniverse.github.io/spitfact/#/q/' + data.id;
+      const pageUrl = 'https://spitfact.netlify.app/#/q/' + data.id;
       setPageMeta({ title: data.question_text + ' · Spitfact', description: desc, url: pageUrl });
 
       // JSON-LD structured data so Google understands this is a poll

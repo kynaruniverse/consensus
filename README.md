@@ -9,4 +9,4 @@ The world's opinions — live, realtime, beautiful.
 
 MVP built 100% on mobile with Spck Editor + GitHub Pages + Supabase.
 
-Live at: https://kynaruniverse.github.io/spitfact/
+Live at: https://spitfact.netlify.app/
