@@ -1,88 +1,26 @@
-<<<<<<< HEAD
 # Spitfact
 
-The world's opinions — live, realtime, beautiful.
+Real-time global polling and opinion analytics.
 
-- Post any question with 2+ options
-- Vote instantly
-- See live charts + country breakdown
-- Shareable results
+**Live:** https://spitfact.netlify.app
 
-MVP built 100% on mobile with Spck Editor + GitHub Pages + Supabase.
+## What it does
+- Post any question with 2–4 options
+- Vote instantly — no account required
+- See live results, country breakdowns, demographic splits
+- Predict the winner before voting for leaderboard points
+- Client dashboard: advanced analytics, CSV export, trend tracking
 
-Live at: https://spitfact.netlify.app/
-=======
-# React + TypeScript + Vite
+## Tech stack
+- React 18 + TypeScript + Vite
+- Supabase (auth, database, realtime subscriptions)
+- Tailwind CSS v4 + Recharts
+- Netlify (hosting + edge functions for geolocation & moderation)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
->>>>>>> migration/vite-typescript
+## Phases
+- [x] Phase 1 — Cleanup, design system, new palette & fonts
+- [ ] Phase 2 — New app shell (sidebar + layout)
+- [ ] Phase 3 — Feed & Home
+- [ ] Phase 4 — Split-screen Question page
+- [ ] Phase 5 — Dashboard & feature gating
+- [ ] Phase 6 — Polish (toasts, PWA, confetti, accessibility)
