@@ -11,24 +11,30 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const db = createClient(supabaseUrl, supabaseAnonKey);
 
 // Constants
+// Chart/option colours — gold-first metallic palette matching Bible
 export const COLORS = [
-  '#818cf8', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#38bdf8',
+  '#D4AF37', // gold
+  '#C0C0C0', // silver
+  '#CD7F32', // bronze
+  '#7B3F00', // burnt orange
+  '#4A9EE8', // cool blue accent
+  '#10b981', // emerald (kept for variety)
 ];
 
 export const AGE_RANGES = ['Under 18', '18–24', '25–34', '35–44', '45–54', '55+'];
 export const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
 export const CATEGORIES: Category[] = [
-  { id: 'General', label: '🌍 General', color: '#818cf8' },
-  { id: 'Food', label: '🍕 Food', color: '#f97316' },
-  { id: 'Sports', label: '⚽ Sports', color: '#34d399' },
-  { id: 'Politics', label: '🗳️ Politics', color: '#f87171' },
-  { id: 'Tech', label: '💻 Tech', color: '#38bdf8' },
-  { id: 'Music', label: '🎵 Music', color: '#a78bfa' },
-  { id: 'Film & TV', label: '🎬 Film & TV', color: '#fbbf24' },
-  { id: 'Science', label: '🔬 Science', color: '#10b981' },
-  { id: 'Life', label: '✨ Life', color: '#e879f9' },
-  { id: 'Debate', label: '🔥 Debate', color: '#ef4444' },
+  { id: 'General',  label: '🌍 General',  color: '#D4AF37' }, // gold
+  { id: 'Food',     label: '🍕 Food',     color: '#CD7F32' }, // bronze
+  { id: 'Sports',   label: '⚽ Sports',   color: '#4A9EE8' }, // blue
+  { id: 'Politics', label: '🗳️ Politics', color: '#C0504D' }, // muted red
+  { id: 'Tech',     label: '💻 Tech',     color: '#38bdf8' }, // cyan
+  { id: 'Music',    label: '🎵 Music',    color: '#a78bfa' }, // purple
+  { id: 'Film & TV',label: '🎬 Film & TV',color: '#C4A052' }, // warm gold
+  { id: 'Science',  label: '🔬 Science',  color: '#10b981' }, // emerald
+  { id: 'Life',     label: '✨ Life',     color: '#C0C0C0' }, // silver
+  { id: 'Debate',   label: '🔥 Debate',   color: '#7B3F00' }, // burnt orange
 ];
 
 // Geolocation helper with edge function
