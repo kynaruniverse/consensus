@@ -1,0 +1,50 @@
+redirectsOrigin = "config"
+plugins = []
+headers = []
+
+[build]
+edge_functions = "/data/data/com.termux/files/home/spitfact-vite/netlify/edge-functions"
+publish = "/data/data/com.termux/files/home/spitfact-vite/dist"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[dev]
+command = "npm run dev"
+framework = "vite"
+targetPort = 5173.0
+port = 8888.0
+
+[[edge_functions]]
+function = "geolocation"
+path = "/.netlify/edge-functions/geolocation"
+
+[functions]
+
+[functions."*"]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
