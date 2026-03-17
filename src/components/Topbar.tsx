@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { navigate } from '../lib/router';
 import type { Page } from '../lib/router';
 import type { Profile } from '../types';
@@ -9,20 +9,43 @@ interface Props {
 }
 
 export const Topbar: React.FC<Props> = ({ currentPage, user }) => {
-  // Show back button on inner pages instead of logo
   const isInner = currentPage === 'question' || currentPage === 'post';
-
-  const initial = user
-    ? (user.username || '?')[0].toUpperCase()
-    : null;
+  const initial = user ? (user.username || '?')[0].toUpperCase() : null;
 
   return (
-    <header className="topbar" style={{ justifyContent: 'space-between' }}>
+    <header className="topbar" style={{ justifyContent: 'space-between' }} role="banner">
+
+      {/* Skip to main content — accessibility */}
+      <a
+        href="#main-content"
+        style={{
+          position: 'absolute', left: '-9999px', top: 'auto',
+          width: 1, height: 1, overflow: 'hidden',
+        }}
+        onFocus={e => {
+          e.currentTarget.style.left = '16px';
+          e.currentTarget.style.width = 'auto';
+          e.currentTarget.style.height = 'auto';
+          e.currentTarget.style.zIndex = '100';
+          e.currentTarget.style.background = '#D4AF37';
+          e.currentTarget.style.color = '#0B1E3D';
+          e.currentTarget.style.padding = '8px 16px';
+          e.currentTarget.style.borderRadius = '8px';
+        }}
+        onBlur={e => {
+          e.currentTarget.style.left = '-9999px';
+          e.currentTarget.style.width = '1px';
+          e.currentTarget.style.height = '1px';
+        }}
+      >
+        Skip to main content
+      </a>
 
       {/* Left: logo or back */}
       {isInner ? (
         <button
-          onClick={() => navigate(currentPage === 'post' ? '/feed' : '/')}
+          onClick={() => navigate(currentPage === 'post' ? '/feed' : '/feed')}
+          aria-label="Go back to feed"
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: '6px',
@@ -33,45 +56,43 @@ export const Topbar: React.FC<Props> = ({ currentPage, user }) => {
           ← Back
         </button>
       ) : (
-        <a href="#/" style={{ textDecoration: 'none' }}>
-          <span className="logo logo-sm">Spitfact</span>
+        <a href="#/" aria-label="Spitfact home" style={{ textDecoration: 'none' }}>
+          <span className="logo logo-sm" aria-hidden="true">Spitfact</span>
         </a>
       )}
 
-      {/* Right: search hint + profile/auth */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {/* Right controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} role="toolbar" aria-label="Page controls">
 
-        {/* Search button (navigates to feed with focus) */}
         {currentPage !== 'feed' && (
           <button
             onClick={() => navigate('/feed')}
             className="btn-icon"
+            aria-label="Search polls"
             style={{ fontSize: '16px' }}
-            aria-label="Search"
           >
-            🔍
+            <span aria-hidden="true">🔍</span>
           </button>
         )}
 
-        {/* Notifications placeholder */}
-        <div style={{ position: 'relative' }}>
-          <button className="btn-icon" aria-label="Notifications" style={{ fontSize: '16px' }}>
-            🔔
-          </button>
-          {/* Badge — will be wired up in Phase 6 */}
-        </div>
+        <button
+          className="btn-icon"
+          aria-label="Notifications"
+          style={{ fontSize: '16px' }}
+        >
+          <span aria-hidden="true">🔔</span>
+        </button>
 
-        {/* Profile / sign in */}
         {user ? (
           <a
             href="#/profile"
+            aria-label={`Profile: ${user.username || 'Account'}`}
             style={{ textDecoration: 'none' }}
-            aria-label="Profile"
           >
-            <div className="avatar avatar-sm">{initial}</div>
+            <div className="avatar avatar-sm" aria-hidden="true">{initial}</div>
           </a>
         ) : (
-          <a href="#/auth" className="btn btn-gold btn-sm">
+          <a href="#/auth" className="btn btn-gold btn-sm" aria-label="Sign in to your account">
             Sign in
           </a>
         )}

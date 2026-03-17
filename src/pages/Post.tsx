@@ -1,185 +1,248 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { db, COLORS, CATEGORIES } from '../lib/supabase';
 import { navigate } from '../lib/router';
+import type { Profile } from '../types';
 
-interface Props {
-  user?: any;
-}
+interface Props { user?: Profile | null; }
+
+const MAX_CHARS = 200;
 
 export const PostPage: React.FC<Props> = ({ user }) => {
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState(['', '']);
-  const [category, setCategory] = useState('General');
-  const [posting, setPosting] = useState(false);
-  const [moderating, setModerating] = useState(false);
-  const [moderationError, setModerationError] = useState('');
+  const [question, setQuestion]               = useState('');
+  const [options, setOptions]                 = useState(['', '']);
+  const [category, setCategory]               = useState('General');
+  const [posting, setPosting]                 = useState(false);
+  const [moderating, setModerating]           = useState(false);
+  const [error, setError]                     = useState('');
 
-  const checkModeration = async (text: string) => {
+  const checkModeration = async (text: string): Promise<boolean> => {
     try {
-      const response = await fetch('/.netlify/edge-functions/moderate', {
+      const res  = await fetch('/.netlify/edge-functions/moderate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, type: 'question' })
+        body: JSON.stringify({ text, type: 'question' }),
       });
-      const data = await response.json();
+      const data = await res.json();
       return data.flagged;
-    } catch {
-      return false; // Fail open if moderation service is down
-    }
+    } catch { return false; }
   };
 
   const post = async () => {
-    const valid = options.filter(o => o.trim() !== '');
-    if (!question.trim()) {
-      alert('Please enter a question');
-      return;
-    }
-    if (valid.length < 2) {
-      alert('Add at least 2 options');
-      return;
-    }
+    const valid = options.filter(o => o.trim());
+    if (!question.trim())  { setError('Please enter a question.'); return; }
+    if (valid.length < 2)  { setError('Add at least 2 options.');  return; }
+    if (question.length > MAX_CHARS) { setError(`Question must be under ${MAX_CHARS} characters.`); return; }
 
+    setError('');
     setModerating(true);
     const flagged = await checkModeration(question);
     setModerating(false);
 
     if (flagged) {
-      setModerationError('Your question was flagged as inappropriate. Please revise.');
+      setError('Your question was flagged as inappropriate. Please revise.');
       return;
     }
 
     setPosting(true);
-    const payload: any = {
-      question_text: question.trim(),
-      options: valid,
-      category,
-    };
+    const payload: any = { question_text: question.trim(), options: valid, category };
     if (user) payload.created_by = user.id;
 
-    const { data, error } = await db.from('questions').insert(payload).select().single();
+    const { data, error: err } = await db.from('questions').insert(payload).select().single();
     setPosting(false);
 
-    if (error) {
-      alert('Failed to post: ' + error.message);
+    if (err) {
+      setError('Failed to post: ' + err.message);
+      toast.error('Failed to post question. Please try again.');
       return;
     }
+    toast.success('Question posted! Watch the votes come in 🌍');
     navigate('/q/' + data.id);
   };
 
-  return (
-    <div className="max-w-[640px] mx-auto px-4 pt-8 pb-20">
-      <h1 className="text-2xl font-black text-white mb-2">Ask the world</h1>
-      <p className="text-slate-500 text-sm mb-6">Post your question and watch votes come in live.</p>
+  const charPct = Math.min((question.length / MAX_CHARS) * 100, 100);
+  const charColor = question.length > MAX_CHARS * 0.9 ? '#f87171'
+    : question.length > MAX_CHARS * 0.75 ? '#D4AF37'
+    : '#536280';
 
-      {moderationError && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-          {moderationError}
+  return (
+    <div style={{ maxWidth: 640, margin: '0 auto', padding: '28px 20px 40px' }}>
+
+      {/* Header */}
+      <div className="animate-fade-in" style={{ marginBottom: 24 }}>
+        <h1 className="font-heading" style={{ fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
+          Ask the world
+        </h1>
+        <p style={{ fontSize: 14, color: '#8A9BB8' }}>
+          Post your question and watch votes come in live from around the globe.
+        </p>
+      </div>
+
+      {/* Error banner */}
+      {error && (
+        <div style={{
+          marginBottom: 16, padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)',
+          color: '#f87171', fontSize: 13, fontFamily: 'Inter, sans-serif',
+        }}>
+          {error}
         </div>
       )}
 
-      <div className="g-border rounded-2xl p-6">
-        {/* Question */}
-        <div className="mb-5">
-          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 block">
-            Your question
-          </label>
+      <div className="card" style={{ padding: 24 }}>
+
+        {/* ── Question field ── */}
+        <div style={{ marginBottom: 24 }}>
+          <div className="section-label" style={{ marginBottom: 8 }}>YOUR QUESTION</div>
           <textarea
             value={question}
-            onChange={(e) => {
-              setQuestion(e.target.value);
-              setModerationError('');
-            }}
+            onChange={e => { setQuestion(e.target.value); setError(''); }}
             placeholder="e.g. Is a hotdog a sandwich?"
             rows={3}
-            className="w-full bg-subtle border border-border2 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+            maxLength={MAX_CHARS + 20}
+            className="input"
+            style={{ resize: 'none' }}
           />
-          <div className="text-right text-xs mt-1 text-slate-600">
-            {question.length}/200
+          {/* Character counter */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+            gap: 8, marginTop: 6,
+          }}>
+            <div style={{
+              width: 80, height: 4, borderRadius: 999,
+              background: 'rgba(11,30,61,0.8)',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%', borderRadius: 999,
+                width: charPct + '%',
+                background: charColor,
+                transition: 'width 0.2s ease, background 0.2s ease',
+              }} />
+            </div>
+            <span style={{ fontSize: 11, color: charColor, fontFamily: 'Roboto Mono, monospace' }}>
+              {question.length}/{MAX_CHARS}
+            </span>
           </div>
         </div>
 
-        {/* Category */}
-        <div className="mb-5">
-          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 block">
-            Category
-          </label>
-          <div className="flex flex-wrap gap-2">
+        {/* ── Category ── */}
+        <div style={{ marginBottom: 24 }}>
+          <div className="section-label" style={{ marginBottom: 10 }}>CATEGORY</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {CATEGORIES.map(c => (
               <button
                 key={c.id}
                 onClick={() => setCategory(c.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${
-                  category === c.id
-                    ? 'text-white'
-                    : 'bg-surface border border-border1 text-slate-500'
-                }`}
-                style={category === c.id ? { background: c.color + '30', borderColor: c.color } : {}}>
+                className="cat-chip"
+                style={category === c.id ? {
+                  background: c.color + '22',
+                  borderColor: c.color + '80',
+                  color: c.color,
+                } : {}}
+              >
                 {c.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Options */}
-        <div className="mb-5">
-          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 block">
-            Options (2–4)
-          </label>
-          <div className="flex flex-col gap-2">
+        {/* ── Options ── */}
+        <div style={{ marginBottom: 20 }}>
+          <div className="section-label" style={{ marginBottom: 10 }}>OPTIONS (2–4)</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {options.map((opt, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ background: COLORS[i % COLORS.length] + '20', color: COLORS[i % COLORS.length] }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* Number dot */}
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700, fontFamily: 'Poppins, sans-serif',
+                  background: COLORS[i % COLORS.length] + '20',
+                  color: COLORS[i % COLORS.length],
+                  border: `1px solid ${COLORS[i % COLORS.length]}40`,
+                }}>
                   {i + 1}
                 </div>
+
                 <input
                   type="text"
                   value={opt}
-                  onChange={(e) => {
-                    const newOpts = [...options];
-                    newOpts[i] = e.target.value;
-                    setOptions(newOpts);
+                  onChange={e => {
+                    const n = [...options]; n[i] = e.target.value; setOptions(n);
                   }}
                   placeholder={`Option ${i + 1}`}
-                  className="flex-1 bg-subtle border border-border2 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                  className="input"
+                  style={{ flex: 1, marginBottom: 0 }}
                 />
+
                 {options.length > 2 && (
                   <button
                     onClick={() => setOptions(options.filter((_, j) => j !== i))}
-                    className="text-slate-600 hover:text-red-400 text-xl">
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: '#536280', fontSize: 20, lineHeight: 1,
+                      padding: '2px 6px', borderRadius: 6,
+                      transition: 'color 0.15s ease',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#536280')}
+                    aria-label="Remove option"
+                  >
                     ×
                   </button>
                 )}
               </div>
             ))}
           </div>
+
+          {options.length < 4 && (
+            <button
+              onClick={() => setOptions([...options, ''])}
+              style={{
+                marginTop: 10, background: 'none', border: 'none', cursor: 'pointer',
+                color: '#D4AF37', fontSize: 13, fontWeight: 600,
+                fontFamily: 'Poppins, sans-serif', padding: '4px 0',
+              }}
+            >
+              + Add another option
+            </button>
+          )}
         </div>
 
-        {/* Add option */}
-        {options.length < 4 && (
-          <button
-            onClick={() => setOptions([...options, ''])}
-            className="text-indigo-400 text-sm font-semibold mb-5">
-            + Add another option
-          </button>
-        )}
+        {/* ── Divider ── */}
+        <div className="divider" />
 
-        {/* Submit */}
+        {/* ── Submit ── */}
         <button
+          className="btn btn-gold btn-lg"
           onClick={post}
           disabled={posting || moderating}
-          className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 disabled:opacity-50">
-          {moderating ? 'Checking...' : posting ? 'Posting...' : '🌍 Post to the World'}
+          style={{ width: '100%', justifyContent: 'center', marginBottom: 12 }}
+        >
+          {moderating ? '🔍 Checking…'
+            : posting  ? '📡 Posting…'
+            : '🌍 Post to the World'}
         </button>
 
         {!user && (
-          <p className="text-center text-xs text-slate-500 mt-3">
-            Posting anonymously. <a href="#/auth" className="text-indigo-400">Sign in</a> to track your questions.
+          <p style={{
+            textAlign: 'center', fontSize: 12, color: '#536280',
+            fontFamily: 'Inter, sans-serif', margin: 0,
+          }}>
+            Posting anonymously.{' '}
+            <a href="#/auth" style={{ color: '#D4AF37', textDecoration: 'none', fontWeight: 600 }}>
+              Sign in
+            </a>{' '}
+            to track your questions.
           </p>
         )}
       </div>
 
-      <p className="text-xs text-slate-600 mt-4 text-center">
+      <p style={{
+        textAlign: 'center', fontSize: 11, color: '#536280',
+        marginTop: 12, fontFamily: 'Inter, sans-serif',
+      }}>
         All questions are automatically moderated for safety.
       </p>
     </div>

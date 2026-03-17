@@ -1,21 +1,34 @@
 {
   "name": "Spitfact",
   "short_name": "Spitfact",
-  "description": "The World's Opinion, Live.",
+  "description": "The World's Opinion, Live. Vote on anything, see real-time results from around the planet.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020817",
-  "theme_color": "#020817",
+  "background_color": "#0B1E3D",
+  "theme_color": "#0B1E3D",
   "orientation": "portrait-primary",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["social", "entertainment", "news"],
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d1424'/><text y='.9em' font-size='72' x='14'>🌍</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230B1E3D'/><text y='.9em' font-size='72' x='14'>🌍</text></svg>",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["social", "entertainment", "news"],
-  "lang": "en",
-  "dir": "ltr"
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Browse Feed",
+      "url": "/#/feed",
+      "description": "Browse trending polls"
+    },
+    {
+      "name": "Ask a Question",
+      "url": "/#/post",
+      "description": "Post a new poll to the world"
+    }
+  ]
 }
