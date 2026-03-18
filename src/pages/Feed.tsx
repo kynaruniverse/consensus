@@ -78,7 +78,7 @@ const PollCard = ({
               fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)',
               background: COLORS[i % COLORS.length] + '14',
               border: `1px solid ${COLORS[i % COLORS.length]}40`,
-              color: COLORS[i % COLORS.length)',
+              color: COLORS[i % COLORS.length],
               whiteSpace: 'nowrap' as const,
             }}
           >
