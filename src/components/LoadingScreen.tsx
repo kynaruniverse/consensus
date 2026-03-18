@@ -8,41 +8,60 @@ export const LoadingScreen: React.FC = () => (
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '16px',
-      background: 'radial-gradient(ellipse at 20% 0%, #102548 0%, #0B1E3D 50%, #080F1E 100%)',
+      gap: 20,
+      background: 'var(--bg)',
+      position: 'relative',
+      overflow: 'hidden',
     }}
   >
-    {/* Animated logo */}
-    <div className="logo animate-bounce-in" style={{ fontSize: '36px' }}>
-      Spitfact
+    {/* Ambient glow blobs */}
+    <div style={{
+      position: 'absolute', top: '-15%', right: '-10%',
+      width: 400, height: 400, borderRadius: '50%',
+      background: 'radial-gradient(circle, rgba(200,255,0,0.06) 0%, transparent 70%)',
+      pointerEvents: 'none',
+    }} />
+    <div style={{
+      position: 'absolute', bottom: '-15%', left: '-10%',
+      width: 300, height: 300, borderRadius: '50%',
+      background: 'radial-gradient(circle, rgba(255,60,110,0.05) 0%, transparent 70%)',
+      pointerEvents: 'none',
+    }} />
+
+    {/* Logo */}
+    <div
+      className="logo animate-bounce-in"
+      style={{ fontSize: 48 }}
+      aria-label="Spitfact"
+    >
+      Spit<span>fact</span>
     </div>
 
-    {/* Live pulse */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    {/* Live pulse row */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <span className="live-dot" />
       <span style={{
-        fontFamily: 'Inter, sans-serif',
-        fontSize: '13px',
-        color: '#536280',
-        letterSpacing: '0.05em',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 11,
+        color: 'var(--muted)',
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
       }}>
-        Loading...
+        Loading
       </span>
     </div>
 
     {/* Skeleton bars */}
-    <div
-      style={{
-        marginTop: '32px',
-        width: '280px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-      }}
-    >
-      <div className="skeleton" style={{ height: '12px', width: '80%'  }} />
-      <div className="skeleton" style={{ height: '12px', width: '60%'  }} />
-      <div className="skeleton" style={{ height: '12px', width: '70%'  }} />
+    <div style={{
+      marginTop: 24,
+      width: 260,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10,
+    }}>
+      <div className="skeleton" style={{ height: 10, width: '80%',  animationDelay: '0ms'   }} />
+      <div className="skeleton" style={{ height: 10, width: '55%',  animationDelay: '120ms' }} />
+      <div className="skeleton" style={{ height: 10, width: '70%',  animationDelay: '240ms' }} />
     </div>
   </div>
 );
