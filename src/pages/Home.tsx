@@ -3,44 +3,40 @@ import { db, CATEGORIES } from '../lib/supabase';
 import { navigate } from '../lib/router';
 import type { Question } from '../types';
 
-// ─── Skeleton ───────────────────────────────────────────────
+// ── Skeleton ──────────────────────────────────────────────────
 const HomeSkeleton = () => (
   <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}>
-    <div className="skeleton" style={{ height: 48, width: '60%', marginBottom: 16 }} />
-    <div className="skeleton" style={{ height: 20, width: '80%', marginBottom: 40 }} />
+    <div className="skeleton" style={{ height: 80, width: '70%', marginBottom: 16 }} />
+    <div className="skeleton" style={{ height: 18, width: '60%', marginBottom: 40 }} />
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 40 }}>
-      {[0,1,2].map(i => <div key={i} className="skeleton" style={{ height: 90 }} />)}
+      {[0,1,2].map(i => <div key={i} className="skeleton" style={{ height: 100 }} />)}
     </div>
-    <div className="skeleton" style={{ height: 160, marginBottom: 40 }} />
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-      {[0,1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 80 }} />)}
+    <div className="skeleton" style={{ height: 180, marginBottom: 40 }} />
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+      {[0,1,2,3,4,5].map(i => <div key={i} className="skeleton" style={{ height: 72 }} />)}
     </div>
   </div>
 );
 
-// ─── Stat card ───────────────────────────────────────────────
-const StatCard = ({
-  icon, value, label, delay,
-}: { icon: string; value: number; label: string; delay: number }) => (
+// ── Stat card ─────────────────────────────────────────────────
+const StatCard = ({ value, label, delay }: { value: number; label: string; delay: number }) => (
   <div
     className="stat-card animate-fade-in"
     style={{ animationDelay: `${delay}ms`, animationFillMode: 'both' }}
   >
-    <div style={{ fontSize: 28, marginBottom: 8, lineHeight: 1 }}>{icon}</div>
     <div
       className="data-value data-value-lg"
-      style={{ color: '#D4AF37', display: 'block', marginBottom: 4 }}
+      style={{ color: 'var(--acid)', display: 'block', marginBottom: 6 }}
     >
       {value.toLocaleString()}
     </div>
-    <div className="section-label" style={{ fontSize: 11 }}>{label}</div>
+    <div className="section-label">{label}</div>
   </div>
 );
 
-// ─── Featured poll card ──────────────────────────────────────
+// ── Featured poll card ────────────────────────────────────────
 const FeaturedCard = ({ question }: { question: Question }) => {
   const cat = CATEGORIES.find(c => c.id === question.category);
-
   return (
     <div
       className="card card-interactive animate-fade-in"
@@ -50,16 +46,16 @@ const FeaturedCard = ({ question }: { question: Question }) => {
       tabIndex={0}
       onKeyDown={e => e.key === 'Enter' && navigate(`/q/${question.id}`)}
     >
-      {/* Gold accent bar */}
+      {/* Accent bar */}
       <div
         className="poll-card-accent"
-        style={{ background: 'linear-gradient(90deg, #D4AF37, #CD7F32, #C0C0C0)' }}
+        style={{ background: `linear-gradient(90deg, var(--hot), var(--acid))` }}
       />
 
-      {/* Live badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+      {/* Tags row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <span className="live-dot" />
-        <span className="section-label" style={{ color: '#D4AF37' }}>TRENDING NOW</span>
+        <span className="section-label" style={{ color: 'var(--hot)' }}>TRENDING NOW</span>
         {cat && (
           <span
             className="badge"
@@ -75,57 +71,55 @@ const FeaturedCard = ({ question }: { question: Question }) => {
         )}
       </div>
 
-      {/* Question text */}
+      {/* Question */}
       <h2
-        className="font-heading"
-        style={{ fontSize: 20, fontWeight: 700, color: '#F5F5F5', marginBottom: 16, lineHeight: 1.3 }}
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 28,
+          letterSpacing: '0.02em',
+          color: 'var(--text)',
+          marginBottom: 16,
+          lineHeight: 1.1,
+        }}
       >
         {question.question_text}
       </h2>
 
-      {/* Options preview */}
+      {/* Option pills */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
         {question.options.slice(0, 3).map((opt, i) => (
           <span
             key={i}
             style={{
               padding: '5px 14px',
-              borderRadius: 999,
+              borderRadius: 'var(--radius-pill)',
               fontSize: 13,
-              fontWeight: 500,
-              background: 'rgba(11,30,61,0.7)',
-              border: '1px solid rgba(212,175,55,0.2)',
-              color: '#C8D4E8',
-              fontFamily: 'Inter, sans-serif',
+              fontWeight: 600,
+              fontFamily: 'var(--font-body)',
+              background: 'var(--surface2)',
+              border: '1px solid var(--border-mid)',
+              color: 'var(--text-2)',
             }}
           >
             {opt}
           </span>
         ))}
         {question.options.length > 3 && (
-          <span style={{ fontSize: 13, color: '#536280', alignSelf: 'center' }}>
+          <span style={{ fontSize: 13, color: 'var(--muted)', alignSelf: 'center' }}>
             +{question.options.length - 3} more
           </span>
         )}
       </div>
 
-      {/* CTA row */}
+      {/* CTA */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span
-          style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: 14,
-            fontWeight: 600,
-            color: '#D4AF37',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'gap 0.2s ease',
-          }}
-        >
+        <span style={{
+          fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 700,
+          color: 'var(--acid)', display: 'flex', alignItems: 'center', gap: 6,
+        }}>
           Vote now →
         </span>
-        <span style={{ fontSize: 12, color: '#536280' }}>
+        <span style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
           {question.options.length} options
         </span>
       </div>
@@ -133,15 +127,13 @@ const FeaturedCard = ({ question }: { question: Question }) => {
   );
 };
 
-// ─── Category card ───────────────────────────────────────────
-const CatCard = ({
-  cat, idx,
-}: { cat: typeof CATEGORIES[0]; idx: number }) => (
+// ── Category card ─────────────────────────────────────────────
+const CatCard = ({ cat, idx }: { cat: typeof CATEGORIES[0]; idx: number }) => (
   <div
     className="card card-interactive animate-fade-in"
     style={{
-      padding: '18px 16px',
-      animationDelay: `${300 + idx * 60}ms`,
+      padding: '16px 14px',
+      animationDelay: `${300 + idx * 50}ms`,
       animationFillMode: 'both',
       cursor: 'pointer',
     }}
@@ -150,37 +142,30 @@ const CatCard = ({
     tabIndex={0}
     onKeyDown={e => e.key === 'Enter' && navigate(`/feed?cat=${cat.id}`)}
   >
-    {/* Colour accent top bar */}
     <div
       className="poll-card-accent"
-      style={{ background: `linear-gradient(90deg, ${cat.color}, ${cat.color}88, transparent)` }}
+      style={{ background: `linear-gradient(90deg, ${cat.color}cc, ${cat.color}22, transparent)` }}
     />
-
-    <div style={{ fontSize: 26, marginBottom: 8, lineHeight: 1 }}>
+    <div style={{ fontSize: 22, marginBottom: 6, lineHeight: 1 }}>
       {cat.label.split(' ')[0]}
     </div>
-    <div
-      style={{
-        fontFamily: 'Poppins, sans-serif',
-        fontSize: 13,
-        fontWeight: 600,
-        color: '#C8D4E8',
-      }}
-    >
+    <div style={{
+      fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 700, color: 'var(--text-2)',
+    }}>
       {cat.label.split(' ').slice(1).join(' ')}
     </div>
   </div>
 );
 
-// ─── How it works ────────────────────────────────────────────
+// ── How it works ──────────────────────────────────────────────
 const HOW_STEPS = [
-  { icon: '✏️', title: 'Ask anything',   body: 'Post a question with 2–4 options in seconds.' },
-  { icon: '🗳️', title: 'World votes',    body: 'Anyone, anywhere can vote — no account needed.' },
-  { icon: '📊', title: 'See it live',    body: 'Watch results update in real time by country and demographic.' },
-  { icon: '🔮', title: 'Predict & rank', body: 'Guess the winning option before you vote to climb the leaderboard.' },
+  { num: '01', title: 'Ask anything',   body: 'Post a question with 2–4 options in seconds.', accent: 'var(--acid)'  },
+  { num: '02', title: 'World votes',    body: 'Anyone, anywhere can vote — one answer per person, forever.', accent: 'var(--cool)' },
+  { num: '03', title: 'See it live',    body: 'Watch results update in real time by country and demographic.', accent: 'var(--hot)'  },
+  { num: '04', title: 'Predict & rank', body: 'Guess the winning option before you vote to climb the leaderboard.', accent: 'var(--gold)' },
 ];
 
-// ─── Page ────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────
 export const HomePage = () => {
   const [stats, setStats]       = useState({ questions: 0, votes: 0, countries: 0 });
   const [featured, setFeatured] = useState<Question | null>(null);
@@ -191,7 +176,6 @@ export const HomePage = () => {
       db.from('questions').select('id', { count: 'exact', head: true }),
       db.from('votes').select('id', { count: 'exact', head: true }),
       db.from('votes').select('country_code').neq('country_code', 'XX').neq('country_code', null),
-      // Featured = most-voted question in last 7 days
       db.from('questions')
         .select('*')
         .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString())
@@ -213,142 +197,212 @@ export const HomePage = () => {
   if (loading) return <HomeSkeleton />;
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 20px 40px' }}>
+    <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 20px 48px' }}>
 
-      {/* ── Hero ──────────────────────────────── */}
-      <div className="animate-fade-in" style={{ marginBottom: 36 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <div className="animate-fade-in" style={{ marginBottom: 40 }}>
+
+        {/* Eyebrow */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          background: 'var(--acid-dim)',
+          border: '1px solid var(--acid-mid)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '5px 12px',
+          marginBottom: 20,
+        }}>
           <span className="live-dot" />
-          <span className="section-label" style={{ color: '#D4AF37' }}>LIVE GLOBAL POLLING</span>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 10,
+            letterSpacing: '0.12em', textTransform: 'uppercase',
+            color: 'var(--acid)',
+          }}>
+            Live Global Polling
+          </span>
         </div>
 
+        {/* Title */}
         <h1
-          className="font-heading"
-          style={{ marginBottom: 12, lineHeight: 1.15 }}
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(52px, 10vw, 80px)',
+            lineHeight: 0.92,
+            letterSpacing: '0.02em',
+            marginBottom: 20,
+          }}
         >
-          <span style={{ color: '#F5F5F5' }}>The World's</span>
-          <br />
-          <span
-            style={{
-              background: 'linear-gradient(135deg, #E8C84A 0%, #D4AF37 45%, #C0C0C0 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            Opinion, Live
-          </span>
+          THE<br />
+          <span style={{ color: 'var(--acid)' }}>WORLD'S</span><br />
+          <span style={{ color: 'var(--muted)' }}>OPINION.</span>
         </h1>
 
-        <p style={{ color: '#8A9BB8', fontSize: 16, maxWidth: 520, lineHeight: 1.65 }}>
-          Vote on anything. See real-time results from around the planet —
-          broken down by country, age, and gender. No bias, just data.
+        <p style={{
+          fontSize: 15, lineHeight: 1.65, color: 'var(--muted)',
+          maxWidth: 480, marginBottom: 28,
+        }}>
+          Vote on anything. See real-time results broken down by{' '}
+          <span style={{ color: 'var(--text)' }}>country, age, and gender</span>.
+          No bias, just data.
         </p>
 
-        <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-gold btn-lg"
-            onClick={() => navigate('/feed')}
-          >
-            Browse polls
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button className="btn btn-gold btn-lg" onClick={() => navigate('/feed')}>
+            ⚡ Browse Polls
           </button>
-          <button
-            className="btn btn-ghost btn-lg"
-            onClick={() => navigate('/post')}
-          >
-            ✏️ Ask a question
+          <button className="btn btn-ghost btn-lg" onClick={() => navigate('/post')}>
+            ✏️ Ask a Question
           </button>
         </div>
       </div>
 
-      {/* ── Stats ─────────────────────────────── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
-          marginBottom: 36,
-        }}
-      >
-        <StatCard icon="❓" value={stats.questions} label="Questions asked" delay={0}   />
-        <StatCard icon="🗳️" value={stats.votes}     label="Votes cast"      delay={80}  />
-        <StatCard icon="🌍" value={stats.countries} label="Countries"        delay={160} />
+      {/* ── Stats ─────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 40 }}>
+        <StatCard value={stats.questions} label="Questions Asked" delay={0}   />
+        <StatCard value={stats.votes}     label="Votes Cast"      delay={80}  />
+        <StatCard value={stats.countries} label="Countries"       delay={160} />
       </div>
 
-      {/* ── Featured poll ─────────────────────── */}
+      {/* ── Featured poll ─────────────────────────────────── */}
       {featured && (
-        <div style={{ marginBottom: 36 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <span className="section-label">FEATURED POLL</span>
+        <div style={{ marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <span className="section-label" style={{ fontSize: 11 }}>FEATURED POLL</span>
+            <button
+              onClick={() => navigate('/feed')}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--acid)', fontFamily: 'var(--font-mono)',
+                fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
+              }}
+            >
+              SEE ALL →
+            </button>
           </div>
           <FeaturedCard question={featured} />
         </div>
       )}
 
-      {/* ── Categories ────────────────────────── */}
-      <div style={{ marginBottom: 40 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span className="section-label">BROWSE BY TOPIC</span>
+      {/* ── Categories ────────────────────────────────────── */}
+      <div style={{ marginBottom: 44 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <span className="section-label" style={{ fontSize: 11 }}>BROWSE BY TOPIC</span>
           <button
             onClick={() => navigate('/feed')}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: '#D4AF37', fontFamily: 'Poppins, sans-serif',
-              fontSize: 12, fontWeight: 600,
+              color: 'var(--acid)', fontFamily: 'var(--font-mono)',
+              fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
             }}
           >
-            See all →
+            SEE ALL →
           </button>
         </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
+          {CATEGORIES.map((cat, idx) => <CatCard key={cat.id} cat={cat} idx={idx} />)}
+        </div>
+      </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: 12,
-          }}
-        >
-          {CATEGORIES.map((cat, idx) => (
-            <CatCard key={cat.id} cat={cat} idx={idx} />
+      {/* ── How it works ──────────────────────────────────── */}
+      <div style={{ marginBottom: 44 }}>
+        <span className="section-label" style={{ fontSize: 11, display: 'block', marginBottom: 20 }}>
+          HOW IT WORKS
+        </span>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {HOW_STEPS.map((step, i) => (
+            <div
+              key={i}
+              className="animate-fade-in"
+              style={{
+                display: 'flex', gap: 20, paddingBottom: 24,
+                borderBottom: i < HOW_STEPS.length - 1 ? '1px solid var(--border)' : 'none',
+                marginBottom: 24,
+                animationDelay: `${i * 80}ms`, animationFillMode: 'both',
+              }}
+            >
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: 52, lineHeight: 1,
+                color: 'var(--border-bright)', flexShrink: 0, width: 52,
+              }}>
+                {step.num}
+              </div>
+              <div style={{ paddingTop: 4 }}>
+                <div style={{
+                  fontFamily: 'var(--font-body)', fontWeight: 700,
+                  fontSize: 16, color: 'var(--text)', marginBottom: 4,
+                }}>
+                  {step.title}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.55 }}>
+                  {step.body}
+                </div>
+                <span style={{
+                  display: 'inline-block', marginTop: 10,
+                  fontFamily: 'var(--font-mono)', fontSize: 10,
+                  letterSpacing: '0.1em', textTransform: 'uppercase' as const,
+                  padding: '3px 8px', borderRadius: 'var(--radius-sm)',
+                  background: step.accent + '18',
+                  color: step.accent,
+                  border: `1px solid ${step.accent}30`,
+                }}>
+                  {i === 0 ? 'Free' : i === 1 ? 'Global' : i === 2 ? 'Real-time' : 'Pro'}
+                </span>
+              </div>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* ── How it works ──────────────────────── */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-          <span className="section-label">HOW IT WORKS</span>
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: 12,
-          }}
-        >
-          {HOW_STEPS.map((step, i) => (
-            <div
-              key={i}
-              className="card animate-fade-in"
-              style={{
-                padding: 20,
-                animationDelay: `${i * 80}ms`,
-                animationFillMode: 'both',
-              }}
-            >
-              <div style={{ fontSize: 26, marginBottom: 10 }}>{step.icon}</div>
-              <div
-                className="font-heading"
-                style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F5', marginBottom: 6 }}
-              >
-                {step.title}
+      {/* ── Upgrade banner ────────────────────────────────── */}
+      <div
+        className="card"
+        style={{
+          padding: 28, position: 'relative', overflow: 'hidden',
+          background: 'linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%)',
+        }}
+      >
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(135deg, var(--acid-dim) 0%, transparent 60%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{ position: 'relative' }}>
+          <span style={{
+            display: 'inline-block', marginBottom: 12,
+            fontFamily: 'var(--font-mono)', fontSize: 10,
+            letterSpacing: '0.12em', textTransform: 'uppercase' as const,
+            color: 'var(--gold)', background: 'var(--gold-dim)',
+            border: '1px solid var(--gold-mid)',
+            padding: '4px 10px', borderRadius: 'var(--radius-sm)',
+          }}>
+            ✦ Pro / Business
+          </span>
+          <h2 style={{ fontSize: 32, marginBottom: 10, lineHeight: 1.05 }}>
+            Turn opinions into <span style={{ color: 'var(--acid)' }}>insights</span>
+          </h2>
+          <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 20, maxWidth: 480 }}>
+            Get full demographic breakdowns behind every vote. Know who thinks what —
+            and why it matters for your business.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+            {[
+              'Age, gender & country breakdowns',
+              'Unlimited professional questions',
+              'Export raw data as CSV',
+              'Priority poll placement',
+            ].map((f, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text)' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acid)', flexShrink: 0 }} />
+                {f}
               </div>
-              <div style={{ fontSize: 13, color: '#8A9BB8', lineHeight: 1.55 }}>
-                {step.body}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <button
+            className="btn btn-gold btn-lg"
+            onClick={() => navigate('/auth')}
+            style={{ borderRadius: 'var(--radius-md)' }}
+          >
+            Upgrade to Pro →
+          </button>
         </div>
       </div>
 

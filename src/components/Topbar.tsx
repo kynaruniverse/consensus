@@ -15,7 +15,7 @@ export const Topbar: React.FC<Props> = ({ currentPage, user }) => {
   return (
     <header className="topbar" style={{ justifyContent: 'space-between' }} role="banner">
 
-      {/* Skip to main content — accessibility */}
+      {/* Skip link */}
       <a
         href="#main-content"
         style={{
@@ -23,76 +23,67 @@ export const Topbar: React.FC<Props> = ({ currentPage, user }) => {
           width: 1, height: 1, overflow: 'hidden',
         }}
         onFocus={e => {
-          e.currentTarget.style.left = '16px';
-          e.currentTarget.style.width = 'auto';
-          e.currentTarget.style.height = 'auto';
-          e.currentTarget.style.zIndex = '100';
-          e.currentTarget.style.background = '#D4AF37';
-          e.currentTarget.style.color = '#0B1E3D';
-          e.currentTarget.style.padding = '8px 16px';
-          e.currentTarget.style.borderRadius = '8px';
+          e.currentTarget.style.cssText =
+            'left:16px;width:auto;height:auto;z-index:100;background:var(--acid);color:#0a0a0f;padding:8px 16px;border-radius:8px;font-weight:700;';
         }}
         onBlur={e => {
-          e.currentTarget.style.left = '-9999px';
-          e.currentTarget.style.width = '1px';
-          e.currentTarget.style.height = '1px';
+          e.currentTarget.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;';
         }}
       >
         Skip to main content
       </a>
 
-      {/* Left: logo or back */}
+      {/* Left */}
       {isInner ? (
         <button
-          onClick={() => navigate(currentPage === 'post' ? '/feed' : '/feed')}
+          onClick={() => navigate('/feed')}
           aria-label="Go back to feed"
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '6px',
-            color: '#D4AF37', fontFamily: 'Poppins, sans-serif',
-            fontSize: '14px', fontWeight: 600, padding: '4px 0',
+            display: 'flex', alignItems: 'center', gap: 6,
+            color: 'var(--acid)', fontFamily: 'var(--font-body)',
+            fontSize: 13, fontWeight: 700, padding: '4px 0',
+            letterSpacing: '0.02em',
           }}
         >
           ← Back
         </button>
       ) : (
         <a href="#/" aria-label="Spitfact home" style={{ textDecoration: 'none' }}>
-          <span className="logo logo-sm" aria-hidden="true">Spitfact</span>
+          <span className="logo logo-sm" aria-hidden="true">
+            Spit<span>fact</span>
+          </span>
         </a>
       )}
 
-      {/* Right controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} role="toolbar" aria-label="Page controls">
+      {/* Right */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} role="toolbar">
 
         {currentPage !== 'feed' && (
           <button
             onClick={() => navigate('/feed')}
             className="btn-icon"
             aria-label="Search polls"
-            style={{ fontSize: '16px' }}
           >
             <span aria-hidden="true">🔍</span>
           </button>
         )}
 
-        <button
-          className="btn-icon"
-          aria-label="Notifications"
-          style={{ fontSize: '16px' }}
-        >
+        <button className="btn-icon" aria-label="Notifications" style={{ position: 'relative' }}>
           <span aria-hidden="true">🔔</span>
         </button>
 
         {user ? (
-          <a
-            href="#/profile"
-            aria-label={`Profile: ${user.username || 'Account'}`}
-            style={{ textDecoration: 'none' }}
-          >
+          <a href="#/profile" aria-label={`Profile: ${user.username}`} style={{ textDecoration: 'none' }}>
             <div className="avatar avatar-sm" aria-hidden="true">{initial}</div>
           </a>
         ) : (
-          <a href="#/auth" className="btn btn-gold btn-sm" aria-label="Sign in to your account">
+          <a
+            href="#/auth"
+            className="btn btn-gold btn-sm"
+            aria-label="Sign in"
+            style={{ textDecoration: 'none', borderRadius: 'var(--radius-md)' }}
+          >
             Sign in
           </a>
         )}

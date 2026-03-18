@@ -10,7 +10,7 @@ interface Props {
 }
 
 const NAV_ITEMS = [
-  { page: 'home'        as Page, icon: '🌍', label: 'Home'           },
+  { page: 'home'        as Page, icon: '🏠', label: 'Home'           },
   { page: 'feed'        as Page, icon: '📋', label: 'Feed'           },
   { page: 'leaderboard' as Page, icon: '🏆', label: 'Leaderboard'    },
   { page: 'post'        as Page, icon: '✏️',  label: 'Ask a Question' },
@@ -28,16 +28,21 @@ export const Sidebar: React.FC<Props> = ({ currentPage, user, onSignOut }) => {
       <a
         href="#/"
         aria-label="Spitfact home"
-        style={{ textDecoration: 'none', display: 'block', marginBottom: '32px', padding: '4px 6px' }}
+        style={{ textDecoration: 'none', display: 'block', marginBottom: 32, padding: '4px 6px' }}
       >
-        <div className="logo" aria-hidden="true">Spitfact</div>
+        <div className="logo" aria-hidden="true">
+          Spit<span>fact</span>
+        </div>
         <div className="logo-tagline">The World's Opinion, Live</div>
       </a>
 
       <div className="divider" style={{ margin: '0 0 12px' }} />
 
       {/* Main nav */}
-      <nav aria-label="Site navigation" style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+      <nav
+        aria-label="Site navigation"
+        style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}
+      >
         {NAV_ITEMS.map(item => (
           <a
             key={item.page}
@@ -45,7 +50,9 @@ export const Sidebar: React.FC<Props> = ({ currentPage, user, onSignOut }) => {
             className={`nav-item ${currentPage === item.page ? 'active' : ''}`}
             aria-current={currentPage === item.page ? 'page' : undefined}
           >
-            <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+            <span className="nav-icon" aria-hidden="true" style={{ fontSize: 16 }}>
+              {item.icon}
+            </span>
             {item.label}
           </a>
         ))}
@@ -59,9 +66,15 @@ export const Sidebar: React.FC<Props> = ({ currentPage, user, onSignOut }) => {
               className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
               aria-current={currentPage === 'dashboard' ? 'page' : undefined}
             >
-              <span className="nav-icon" aria-hidden="true">{CLIENT_ITEM.icon}</span>
+              <span className="nav-icon" aria-hidden="true" style={{ fontSize: 16 }}>
+                {CLIENT_ITEM.icon}
+              </span>
               {CLIENT_ITEM.label}
-              <span className="badge badge-gold" style={{ marginLeft: 'auto', fontSize: '9px' }} aria-label="Pro feature">
+              <span
+                className="badge badge-gold"
+                style={{ marginLeft: 'auto', fontSize: 9 }}
+                aria-label="Pro feature"
+              >
                 PRO
               </span>
             </a>
@@ -78,17 +91,17 @@ export const Sidebar: React.FC<Props> = ({ currentPage, user, onSignOut }) => {
             href="#/profile"
             className={`nav-item ${currentPage === 'profile' ? 'active' : ''}`}
             aria-current={currentPage === 'profile' ? 'page' : undefined}
-            style={{ marginBottom: '4px' }}
+            style={{ marginBottom: 4 }}
           >
             <div className="avatar avatar-sm" aria-hidden="true">{initial}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                fontFamily: 'Poppins, sans-serif', fontSize: '13px', fontWeight: 600,
-                color: '#F5F5F5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 700,
+                color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {user.username || 'Profile'}
               </div>
-              <div style={{ fontSize: '10px', color: '#536280' }}>
+              <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
                 {user.role === 'client' ? '⭐ Pro Account' : 'Free Account'}
               </div>
             </div>
@@ -97,33 +110,35 @@ export const Sidebar: React.FC<Props> = ({ currentPage, user, onSignOut }) => {
           <button
             onClick={onSignOut}
             className="nav-item btn-danger"
-            aria-label="Sign out of your account"
-            style={{
-              width: '100%', border: 'none', cursor: 'pointer',
-              background: 'transparent', marginTop: '2px',
-            }}
+            aria-label="Sign out"
+            style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', marginTop: 2 }}
           >
-            <span className="nav-icon" aria-hidden="true">🚪</span>
+            <span aria-hidden="true" style={{ fontSize: 16 }}>🚪</span>
             Sign out
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <a
             href="#/auth"
             className="btn btn-gold btn-md"
-            style={{ width: '100%', justifyContent: 'center' }}
+            style={{ width: '100%', justifyContent: 'center', textDecoration: 'none' }}
           >
             Sign in
           </a>
-          <p style={{ fontSize: '11px', color: '#536280', textAlign: 'center', margin: 0 }}>
-            Free · No credit card needed
+          <p style={{
+            fontSize: 11, color: 'var(--muted)', textAlign: 'center', margin: 0,
+            fontFamily: 'var(--font-mono)',
+          }}>
+            Free · No card needed
           </p>
         </div>
       )}
 
-      <div style={{ marginTop: '16px', textAlign: 'center' }}>
-        <span style={{ fontSize: '10px', color: '#243F75' }}>v2.0 · spitfact.netlify.app</span>
+      <div style={{ marginTop: 16, textAlign: 'center' }}>
+        <span style={{ fontSize: 10, color: 'var(--muted-2)', fontFamily: 'var(--font-mono)' }}>
+          v2.0 · spitfact.netlify.app
+        </span>
       </div>
     </aside>
   );

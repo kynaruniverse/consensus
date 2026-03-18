@@ -9,7 +9,7 @@ interface Props {
 }
 
 const LEFT_ITEMS = [
-  { page: 'home' as Page, icon: '🌍', label: 'Home' },
+  { page: 'home' as Page, icon: '🏠', label: 'Home' },
   { page: 'feed' as Page, icon: '📋', label: 'Feed' },
 ];
 const RIGHT_ITEMS = [
@@ -35,7 +35,6 @@ export const BottomNav: React.FC<Props> = ({ currentPage, user }) => {
           className={`bottom-nav-item ${currentPage === item.page ? 'active' : ''}`}
           aria-label={item.label}
           aria-current={currentPage === item.page ? 'page' : undefined}
-          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
         >
           <span className="icon" aria-hidden="true">{item.icon}</span>
           <span>{item.label}</span>
@@ -60,17 +59,14 @@ export const BottomNav: React.FC<Props> = ({ currentPage, user }) => {
             className={`bottom-nav-item ${currentPage === item.page ? 'active' : ''}`}
             aria-label={isProfile && user ? `Profile: ${user.username}` : item.label}
             aria-current={currentPage === item.page ? 'page' : undefined}
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
             {isProfile && initial ? (
               <div
                 className="avatar avatar-sm"
                 aria-hidden="true"
                 style={{
-                  width: '22px', height: '22px', fontSize: '10px',
-                  border: currentPage === 'profile'
-                    ? '2px solid #D4AF37'
-                    : '2px solid rgba(212,175,55,0.3)',
+                  width: 22, height: 22, fontSize: 10,
+                  borderColor: currentPage === 'profile' ? 'var(--acid)' : 'var(--border-mid)',
                 }}
               >
                 {initial}

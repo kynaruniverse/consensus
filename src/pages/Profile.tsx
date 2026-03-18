@@ -32,10 +32,7 @@ export const ProfilePage: React.FC<Props> = ({ user, onSignOut, onProfileUpdate 
       .update({ age_range: ageRange || null, gender: gender || null })
       .eq('id', user.id);
     setSaving(false);
-    if (error) {
-      toast.error('Save failed — please try again.');
-      return;
-    }
+    if (error) { toast.error('Save failed — please try again.'); return; }
     setEditing(false);
     toast.success('Profile updated!');
     onProfileUpdate({ ...user, age_range: ageRange, gender });
@@ -47,25 +44,29 @@ export const ProfilePage: React.FC<Props> = ({ user, onSignOut, onProfileUpdate 
     navigate('/');
   };
 
-  const initial = (user.username || '?')[0].toUpperCase();
+  const initial         = (user.username || '?')[0].toUpperCase();
   const hasDemographics = !!(user.age_range || user.gender);
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '28px 20px 40px' }}>
+    <div style={{ maxWidth: 600, margin: '0 auto', padding: '28px 20px 48px' }}>
 
-      {/* ── Avatar + name ── */}
-      <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
+      {/* Avatar + name */}
+      <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
         <div className="avatar avatar-xl">{initial}</div>
         <div>
-          <h1 className="font-heading" style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-            {user.username || 'Anonymous'}
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(28px, 6vw, 40px)',
+            letterSpacing: '0.02em', marginBottom: 4,
+          }}>
+            {(user.username || 'Anonymous').toUpperCase()}
           </h1>
           {hasDemographics && (
-            <p style={{ fontSize: 13, color: '#8A9BB8', margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 8px', fontFamily: 'var(--font-mono)' }}>
               {[user.age_range, user.gender].filter(Boolean).join(' · ')}
             </p>
           )}
-          <div style={{ marginTop: 6 }}>
+          <div>
             {user.role === 'client' ? (
               <span className="badge badge-gold">⭐ Pro Account</span>
             ) : (
@@ -75,39 +76,42 @@ export const ProfilePage: React.FC<Props> = ({ user, onSignOut, onProfileUpdate 
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
         <div className="stat-card">
-          <div className="data-value data-value-lg" style={{ color: '#D4AF37', display: 'block', marginBottom: 4 }}>
+          <div className="data-value data-value-lg" style={{ color: 'var(--acid)', display: 'block', marginBottom: 6 }}>
             {stats.votes}
           </div>
           <div className="section-label">Votes cast</div>
         </div>
         <div className="stat-card">
-          <div className="data-value data-value-lg" style={{ color: '#C0C0C0', display: 'block', marginBottom: 4 }}>
+          <div className="data-value data-value-lg" style={{ color: 'var(--cool)', display: 'block', marginBottom: 6 }}>
             {stats.questions}
           </div>
           <div className="section-label">Questions asked</div>
         </div>
       </div>
 
-      {/* ── Demographics card ── */}
+      {/* Demographics */}
       <div className="card" style={{ padding: 20, marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <h3 className="font-heading" style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>
+            <div style={{
+              fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
+              color: 'var(--text)', marginBottom: 3,
+            }}>
               Demographics
-            </h3>
-            <p style={{ fontSize: 12, color: '#8A9BB8', margin: 0 }}>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>
               Used for breakdowns on poll results
             </p>
           </div>
           <button
-            onClick={() => { setEditing(!editing); setMessage(''); }}
+            onClick={() => setEditing(!editing)}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: editing ? '#536280' : '#D4AF37',
-              fontFamily: 'Poppins, sans-serif', fontSize: 12, fontWeight: 600,
+              color: editing ? 'var(--muted)' : 'var(--acid)',
+              fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 700,
             }}
           >
             {editing ? 'Cancel' : 'Edit'}
@@ -134,7 +138,10 @@ export const ProfilePage: React.FC<Props> = ({ user, onSignOut, onProfileUpdate 
             </button>
           </div>
         ) : (
-          <div style={{ fontSize: 14, color: hasDemographics ? '#C8D4E8' : '#536280' }}>
+          <div style={{
+            fontSize: 14, fontFamily: 'var(--font-body)',
+            color: hasDemographics ? 'var(--text-2)' : 'var(--muted)',
+          }}>
             {hasDemographics
               ? [user.age_range, user.gender].filter(Boolean).join(' · ')
               : 'No demographic data set yet.'}
@@ -142,7 +149,7 @@ export const ProfilePage: React.FC<Props> = ({ user, onSignOut, onProfileUpdate 
         )}
       </div>
 
-      {/* ── Client dashboard link ── */}
+      {/* Client dashboard */}
       {user.role === 'client' && (
         <button
           className="btn btn-ghost btn-md"
@@ -153,11 +160,11 @@ export const ProfilePage: React.FC<Props> = ({ user, onSignOut, onProfileUpdate 
         </button>
       )}
 
-      {/* ── Sign out ── */}
+      {/* Sign out */}
       <button
         className="btn btn-danger btn-md"
         onClick={signOut}
-        style={{ width: '100%', justifyContent: 'center', borderRadius: 12 }}
+        style={{ width: '100%', justifyContent: 'center' }}
       >
         Sign out
       </button>

@@ -49,27 +49,41 @@ export const AuthPage = () => {
     else { setSuccess('Check your email to confirm your account.'); setTab('signin'); }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', marginBottom: 12,
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px',
+      background: 'var(--bg)',
     }}>
-      <div style={{ width: '100%', maxWidth: 440 }} className="animate-fade-in">
+      {/* Ambient glow */}
+      <div style={{
+        position: 'fixed', top: '-20%', right: '-10%',
+        width: 400, height: 400, borderRadius: '50%',
+        background: 'radial-gradient(circle, var(--acid-dim) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'fixed', bottom: '-20%', left: '-10%',
+        width: 300, height: 300, borderRadius: '50%',
+        background: 'radial-gradient(circle, var(--hot-dim) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ width: '100%', maxWidth: 440, position: 'relative' }} className="animate-fade-in">
 
         {/* Logo + heading */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div className="logo" style={{ fontSize: 32, display: 'block', marginBottom: 8 }}>
-            Spitfact
+          <div className="logo" style={{ display: 'block', marginBottom: 10 }}>
+            Spit<span>fact</span>
           </div>
-          <h1 className="font-heading" style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
-            {tab === 'signin' ? 'Welcome back' : 'Join Spitfact'}
+          <h1 style={{
+            fontFamily: 'var(--font-display)', fontSize: 24,
+            letterSpacing: '0.02em', marginBottom: 6,
+          }}>
+            {tab === 'signin' ? 'WELCOME BACK' : 'JOIN SPITFACT'}
           </h1>
-          <p style={{ fontSize: 14, color: '#8A9BB8' }}>
+          <p style={{ fontSize: 14, color: 'var(--muted)' }}>
             Vote, predict, and see how the world thinks.
           </p>
         </div>
@@ -77,20 +91,19 @@ export const AuthPage = () => {
         {/* Tab switcher */}
         <div style={{
           display: 'flex', gap: 4,
-          background: 'rgba(11,30,61,0.8)',
-          border: '1px solid rgba(212,175,55,0.15)',
-          borderRadius: 12, padding: 4, marginBottom: 20,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)', padding: 4, marginBottom: 20,
         }}>
           {(['signin', 'signup'] as const).map(t => (
             <button key={t} onClick={() => reset(t)} style={{
-              flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-              cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
-              fontSize: 13, fontWeight: 600, transition: 'all 0.2s ease',
-              background: tab === t
-                ? 'linear-gradient(145deg, #E8C84A, #D4AF37)'
-                : 'transparent',
-              color: tab === t ? '#0B1E3D' : '#536280',
-              boxShadow: tab === t ? '0 2px 8px rgba(212,175,55,0.3)' : 'none',
+              flex: 1, padding: '10px 0',
+              borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 700,
+              transition: 'all 0.2s ease',
+              background: tab === t ? 'var(--acid)' : 'transparent',
+              color: tab === t ? '#0a0a0f' : 'var(--muted)',
+              boxShadow: tab === t ? '0 2px 12px var(--acid-glow)' : 'none',
             }}>
               {t === 'signin' ? 'Sign In' : 'Sign Up'}
             </button>
@@ -103,112 +116,98 @@ export const AuthPage = () => {
           {/* Error / success banners */}
           {error && (
             <div style={{
-              marginBottom: 16, padding: '10px 14px', borderRadius: 10,
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              color: '#f87171', fontSize: 13, fontFamily: 'Inter, sans-serif',
+              marginBottom: 16, padding: '10px 14px', borderRadius: 'var(--radius-md)',
+              background: 'var(--hot-dim)', border: '1px solid var(--hot-mid)',
+              color: 'var(--hot)', fontSize: 13, fontFamily: 'var(--font-body)',
             }}>
               {error}
             </div>
           )}
           {success && (
             <div style={{
-              marginBottom: 16, padding: '10px 14px', borderRadius: 10,
-              background: 'rgba(16,185,129,0.08)',
-              border: '1px solid rgba(16,185,129,0.3)',
-              color: '#34d399', fontSize: 13, fontFamily: 'Inter, sans-serif',
+              marginBottom: 16, padding: '10px 14px', borderRadius: 'var(--radius-md)',
+              background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)',
+              color: '#34d399', fontSize: 13, fontFamily: 'var(--font-body)',
             }}>
               {success}
             </div>
           )}
 
-          {/* Username (signup only) */}
           {tab === 'signup' && (
             <input
-              type="text"
-              placeholder="Username"
+              type="text" placeholder="Username"
               value={username}
               onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
-              className="input"
-              style={inputStyle}
+              className="input" style={{ marginBottom: 12 }}
             />
           )}
 
           <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="input"
-            style={inputStyle}
+            type="email" placeholder="Email address"
+            value={email} onChange={e => setEmail(e.target.value)}
+            className="input" style={{ marginBottom: 12 }}
             onKeyDown={e => { if (e.key === 'Enter' && tab === 'signin') signIn(); }}
           />
 
           <input
-            type="password"
-            placeholder="Password (min 6 chars)"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="input"
-            style={{ ...inputStyle, marginBottom: tab === 'signup' ? 16 : 20 }}
+            type="password" placeholder="Password (min 6 chars)"
+            value={password} onChange={e => setPassword(e.target.value)}
+            className="input" style={{ marginBottom: tab === 'signup' ? 16 : 20 }}
             onKeyDown={e => { if (e.key === 'Enter' && tab === 'signin') signIn(); }}
           />
 
-          {/* Signup extras */}
           {tab === 'signup' && (
             <>
               <div style={{
-                fontSize: 11, color: '#536280', marginBottom: 10,
-                fontFamily: 'Inter, sans-serif',
+                fontSize: 11, color: 'var(--muted)', marginBottom: 10,
+                fontFamily: 'var(--font-mono)',
               }}>
-                Optional — add age &amp; gender to unlock demographic breakdowns
+                OPTIONAL — adds demographic breakdowns to your results
               </div>
 
               <select value={ageRange} onChange={e => setAgeRange(e.target.value)}
-                className="input" style={inputStyle}>
+                className="input" style={{ marginBottom: 10 }}>
                 <option value="">Age range (optional)</option>
                 {AGE_RANGES.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
 
               <select value={gender} onChange={e => setGender(e.target.value)}
-                className="input" style={{ ...inputStyle, marginBottom: 16 }}>
+                className="input" style={{ marginBottom: 16 }}>
                 <option value="">Gender (optional)</option>
                 {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
 
-              {/* Client toggle */}
+              {/* Business toggle */}
               <div
                 onClick={() => setIsClient(!isClient)}
                 style={{
                   display: 'flex', alignItems: 'flex-start', gap: 12,
-                  padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
-                  marginBottom: 20,
-                  background: isClient ? 'rgba(212,175,55,0.06)' : 'rgba(11,30,61,0.5)',
-                  border: `1px solid ${isClient ? 'rgba(212,175,55,0.35)' : 'rgba(212,175,55,0.1)'}`,
+                  padding: '12px 14px', borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer', marginBottom: 20,
+                  background: isClient ? 'var(--acid-dim)' : 'var(--surface2)',
+                  border: `1px solid ${isClient ? 'var(--acid-mid)' : 'var(--border)'}`,
                   transition: 'all 0.2s ease',
                 }}
               >
-                {/* Checkbox */}
                 <div style={{
-                  width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                  width: 20, height: 20, borderRadius: 'var(--radius-sm)',
+                  flexShrink: 0, marginTop: 1,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 12, fontWeight: 700,
-                  background: isClient
-                    ? 'linear-gradient(145deg, #E8C84A, #D4AF37)'
-                    : 'transparent',
-                  border: isClient
-                    ? 'none'
-                    : '2px solid rgba(212,175,55,0.3)',
-                  color: '#0B1E3D',
-                  transition: 'all 0.2s ease',
+                  background: isClient ? 'var(--acid)' : 'transparent',
+                  border: isClient ? 'none' : '2px solid var(--border-bright)',
+                  color: '#0a0a0f', transition: 'all 0.2s ease',
                 }}>
                   {isClient && '✓'}
                 </div>
                 <div>
-                  <div className="font-heading" style={{ fontSize: 13, fontWeight: 600, color: '#F5F5F5', marginBottom: 3 }}>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 700,
+                    color: 'var(--text)', marginBottom: 3,
+                  }}>
                     I'm a researcher / business
                   </div>
-                  <div style={{ fontSize: 12, color: '#8A9BB8' }}>
+                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>
                     Unlock the client dashboard with full analytics &amp; CSV exports
                   </div>
                 </div>
@@ -216,12 +215,11 @@ export const AuthPage = () => {
             </>
           )}
 
-          {/* Submit */}
           <button
             className="btn btn-gold btn-lg"
             onClick={tab === 'signin' ? signIn : signUp}
             disabled={loading}
-            style={{ width: '100%', justifyContent: 'center' }}
+            style={{ width: '100%', justifyContent: 'center', borderRadius: 'var(--radius-md)' }}
           >
             {loading
               ? 'Loading…'
@@ -232,8 +230,8 @@ export const AuthPage = () => {
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 16 }}>
           <a href="#/" style={{
-            fontSize: 12, color: '#536280', textDecoration: 'none',
-            fontFamily: 'Inter, sans-serif',
+            fontSize: 12, color: 'var(--muted)', textDecoration: 'none',
+            fontFamily: 'var(--font-mono)',
           }}>
             ← Continue without an account
           </a>
