@@ -1,5 +1,7 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+  "version": 2,
+  "routes": [
+    { "src": "/[^.]*", "dest": "/", "status": 200 },
+    { "handle": "filesystem" }
   ]
 }

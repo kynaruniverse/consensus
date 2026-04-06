@@ -1,16 +1,17 @@
 export default function FeedToggle({ active, onChange }) {
   return (
-    <div className="flex bg-slate-800 p-1 rounded-xl mt-6 border border-slate-700">
-      <button 
-        onClick={() => onChange('trending')}
-        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${active === 'trending' ? 'bg-sky-500 text-white' : 'text-slate-400'}`}>
-        🔥 Trending
-      </button>
-      <button 
-        onClick={() => onChange('recent')}
-        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${active === 'recent' ? 'bg-sky-500 text-white' : 'text-slate-400'}`}>
-        🕒 Recent
-      </button>
+    <div className="flex bg-slate-800/80 backdrop-blur-md p-1 rounded-2xl border border-slate-700 shadow-2xl">
+      {['trending', 'recent'].map((type) => (
+        <button
+          key={type}
+          onClick={() => onChange(type)}
+          className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            active === type ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          {type === 'trending' ? '🔥 Trending' : '🕒 Recent'}
+        </button>
+      ))}
     </div>
   );
 }
