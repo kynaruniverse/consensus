@@ -1,25 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from './lib/supabase';
-import { Flame, Clock, Globe } from 'lucide-react';
-import FeedToggle from './components/FeedToggle';
-import PollCard from './components/PollCard';
-import CreatePoll from './components/CreatePoll';
-import { seedDatabase } from './utils/seeder';
+import React, { useState, useEffect } from "react";
+import { supabase } from "./lib/supabase";
+import { Globe } from "lucide-react";
+import FeedToggle from "./components/FeedToggle";
+import PollCard from "./components/PollCard";
+import CreatePoll from "./components/CreatePoll";
+import { seedDatabase } from "./utils/seeder";
 
 export default function App() {
-  const [view, setView] = useState('trending'); 
+  const [view, setView] = useState("trending");
   const [polls, setPolls] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- DEV SEED LOGIC ---
   useEffect(() => {
-    const hasSeeded = localStorage.getItem('spitfact_seeded');
+    const hasSeeded = localStorage.getItem("spitfact_seeded");
     if (!hasSeeded) {
-      // To trigger: Clear your browser cache or run seedDatabase() manually once.
       // seedDatabase().then(() => localStorage.setItem('spitfact_seeded', 'true'));
     }
   }, []);
-  // ----------------------
 
   useEffect(() => {
     fetchData();
@@ -27,10 +24,11 @@ export default function App() {
 
   useEffect(() => {
     const channel = supabase
-      .channel('global-votes')
-      .on('postgres_changes', 
-        { event: 'INSERT', table: 'votes' }, 
-        () => fetchData() 
+      .channel("global-votes")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", table: "votes" },
+        () => fetchData()
       )
       .subscribe();
 
@@ -40,11 +38,8 @@ export default function App() {
   }, [view]);
 
   async function fetchData() {
-    const source = view === 'trending' ? 'trending_polls' : 'polls';
-    
-    const { data, error } = await supabase
-      .from(source)
-      .select('*, votes(*)');
+    const source = view === "trending" ? "trending_polls" : "polls";
+    const { data, error } = await supabase.from(source).select("*, votes(*)");
 
     if (error) {
       console.error("Fetch error:", error);
@@ -52,9 +47,12 @@ export default function App() {
       return;
     }
 
-    const processedData = view === 'recent' 
-      ? [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      : data;
+    const processedData =
+      view === "recent"
+        ? [...data].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          )
+        : data;
 
     setPolls(processedData || []);
     setLoading(false);
@@ -70,13 +68,17 @@ export default function App() {
       <div className="relative max-w-2xl mx-auto px-4 pt-8 pb-24">
         <header className="flex flex-col items-center mb-10 text-center">
           <div className="flex items-center gap-2 mb-2">
-            <Globe className="text-sky-400 animate-pulse" size={20} />
-            <span className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">Live Pulse</span>
+            <Globe className="text-sky-400 animate-pulse-slow" size={20} />
+            <span className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">
+              Live Pulse
+            </span>
           </div>
           <h1 className="text-6xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-500">
             SPITFACT
           </h1>
-          <p className="mt-2 text-slate-400 text-sm font-medium">The world’s opinion, visualized in real-time.</p>
+          <p className="mt-2 text-slate-400 text-sm font-medium">
+            The world’s opinion, visualized in real-time.
+          </p>
         </header>
 
         <CreatePoll onCreated={fetchData} />
@@ -89,15 +91,17 @@ export default function App() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
               <div className="w-8 h-8 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
-              <p className="text-slate-500 text-xs font-bold tracking-widest uppercase">Syncing...</p>
+              <p className="text-slate-500 text-xs font-bold tracking-widest uppercase">
+                Syncing...
+              </p>
             </div>
           ) : polls.length > 0 ? (
-            polls.map((poll) => (
-              <PollCard key={poll.id} poll={poll} />
-            ))
+            polls.map((poll) => <PollCard key={poll.id} poll={poll} />)
           ) : (
             <div className="text-center py-20 bg-slate-800/30 rounded-3xl border border-dashed border-slate-700">
-              <p className="text-slate-500 font-medium">No polls found. Be the first to spark a debate.</p>
+              <p className="text-slate-500 font-medium">
+                No polls found. Be the first to spark a debate.
+              </p>
             </div>
           )}
         </main>

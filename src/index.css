@@ -2,33 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 1. Global Reset & Mobile Optimization */
 @layer base {
   :root {
     color-scheme: dark;
   }
 
-  * {
+  *,
+  *::before,
+  *::after {
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
   }
 
   body {
     @apply bg-slate-900 text-slate-50 font-sans antialiased;
-    /* Prevent accidental browser refresh on swipe down */
     overscroll-behavior-y: contain;
-    /* Smooth elastic scrolling for iOS */
     -webkit-overflow-scrolling: touch;
     margin: 0;
     min-height: 100vh;
   }
-
-  h1, h2, h3 {
-    @apply tracking-tighter;
-  }
 }
 
-/* 2. Custom Spitfact Components */
 @layer components {
   .btn-primary {
     @apply bg-sky-500 hover:bg-sky-400 active:scale-95 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-sky-500/20 disabled:opacity-50;
@@ -47,34 +41,15 @@
   }
 }
 
-/* 3. Utility Animations & UI Polish */
-@layer utilities {
-  .glass {
-    background: rgba(30, 41, 59, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
 
-  /* Custom thin scrollbar for the feed */
-  ::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    @apply bg-slate-700 rounded-full;
-  }
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
 
-  /* Animation for live updates */
-  .pulse-border {
-    animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes pulse-border {
-    0%, 100% { border-color: rgba(56, 189, 248, 0.3); }
-    50% { border-color: rgba(56, 189, 248, 1); }
-  }
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-700 rounded-full;
 }

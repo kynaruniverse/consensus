@@ -1,15 +1,15 @@
+import React from 'react';
 import { toPng } from 'html-to-image';
 
 export const useScreenshot = (elementRef) => {
   const takeScreenshot = async () => {
     if (elementRef.current === null) return;
-    
+
     try {
-      // pixelRatio: 2 ensures the image isn't blurry on Retina/High-res mobile screens
       const dataUrl = await toPng(elementRef.current, { 
         cacheBust: true,
         pixelRatio: 2,
-        backgroundColor: '#0f172a' // Matches your slate-900 bg
+        backgroundColor: '#0f172a',
       });
 
       const link = document.createElement('a');

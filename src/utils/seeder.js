@@ -10,16 +10,16 @@ const seedQuestions = [
   { question: "Work from Home or Office?", options: ["WFH Forever", "Office Vibes", "Hybrid"] },
   { question: "PC or Console?", options: ["PC Master Race", "Console King"] },
   { question: "Dark Mode or Light Mode?", options: ["Dark Mode", "I'm a Psycho (Light)"] },
-  { question: "Should AI have rights?", options: ["Yes", "No", "Only Gemini"] }
+  { question: "Should AI have rights?", options: ["Yes", "No", "Only Gemini"] },
 ];
 
 export const seedDatabase = async () => {
   console.log("🚀 Starting seed...");
-  
+
   const { data, error } = await supabase
     .from('polls')
     .insert(seedQuestions);
-  
+
   if (error) {
     console.error("❌ Seeding failed:", error.message);
   } else {
