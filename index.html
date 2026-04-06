@@ -1,35 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0B1E3D" />
-    <meta name="description" content="Spitfact — Real-time global polling and opinion analytics. Vote, see live results, compare demographics." />
-    <title>Spitfact — The World's Opinion, Live</title>
-
-    <!-- Google Fonts: Poppins (headings) · Inter (body) · Roboto Mono (data) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Open Graph -->
-    <meta property="og:title"       content="Spitfact — The World's Opinion, Live" />
-    <meta property="og:description" content="Vote on anything. See real-time global results, demographics, and live analytics." />
-    <meta property="og:type"        content="website" />
-    <meta property="og:image"       content="/og-default.png" />
-
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js');
+    });
+  }
+</script>
